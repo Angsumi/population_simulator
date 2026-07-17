@@ -1,0 +1,16 @@
+{
+  "project_name": "Logistic Population Growth Simulator",
+  "github_repository": "https://github.com/Angsumi/population_simulator",
+  "git_protocol": "HTTPS",
+  "auth_method": "GitHub CLI (gh)",
+  "workspace_path": "/home/angsuman/extra_spac/population_simulator",
+  "last_updated": "2026-07-17",
+  "features_implemented": [
+    "Logistic Growth Model (dP/dt = r*P*(1-P/K))",
+    "Three-tier visualization dashboard (Population S-Curve/Delta, Per-Capita Rates Intersection, Total Births/Deaths Convergence)",
+    "2D HTML5 Canvas Habitat Visualizer with organic bouncing particles",
+    "Age-based color transition for canvas organisms (Green at birth transitioning gradually to Red at max age)",
+    "Resilient offline Canvas graph drawing fallback when Chart.js is unavailable"
+  ],
+  "instructions_for_future_agents": "When working in this repository, always read this context file first. Make sure git operations use the configured GitHub repository. To push updates, use: git add . && git commit -m '<message>' && git push origin main"
+}
