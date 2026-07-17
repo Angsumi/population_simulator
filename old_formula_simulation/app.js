@@ -3,15 +3,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const inputInitialPop = document.getElementById('initialPop');
     const inputGrowthRate = document.getElementById('growthRate');
     const inputCarryingCapacity = document.getElementById('carryingCapacity');
-    const inputMaxGenerations = document.getElementById('maxGenerations');
     const btnStart = document.getElementById('btnStart');
     const btnInstant = document.getElementById('btnInstant');
     const btnReset = document.getElementById('btnReset');
     const valTime = document.getElementById('valTime');
     const valPopulation = document.getElementById('valPopulation');
     const valUtil = document.getElementById('valUtil');
-    const valBirths = document.getElementById('valBirths');
-    const valDeaths = document.getElementById('valDeaths');
     const speedSlider = document.getElementById('speedSlider');
     const speedVal = document.getElementById('speedVal');
     const simStatus = document.getElementById('simStatus');
@@ -56,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (canvas && canvas.parentElement) {
             const parentWidth = canvas.parentElement.clientWidth;
             canvas.width = Math.max(100, parentWidth - 40);
-            canvas.height = Math.max(250, canvas.parentElement.clientHeight - 80) || 400;
+            canvas.height = 150;
         }
     }
     window.addEventListener('resize', resizeCanvas);
@@ -65,6 +62,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Simulation State
     let simInterval = null;
     let currentGeneration = 0;
+    const maxGenerations = 100;
+    let currentPopulation = 0;
     let historyLabels = [];
     let historyPopData = [];
     let historyCapData = [];
@@ -74,39 +73,24 @@ document.addEventListener('DOMContentLoaded', () => {
     let historyTotalBirthsData = [];
     let historyTotalDeathsData = [];
 
-    // ─────────────────────────────────────────────────────────
-    //  AGENT-BASED INDIVIDUAL ORGANISM
-    //  Each organism is an independent agent with its own state.
-    //  Births happen by "splitting" — child appears next to parent.
-    //  Death is stochastic, density-dependent.
-    // ─────────────────────────────────────────────────────────
-    const MATURITY_AGE = 8;      // generations before an organism can reproduce
-    const MAX_VISUAL = 600;       // max dots rendered on canvas for performance
-
+    // Particle logic for Visual Habitat
     class Organism {
-        constructor(x, y, age = 0) {
+        constructor(x, y) {
             this.x = x;
             this.y = y;
-            this.vx = (Math.random() - 0.5) * 1.8;
-            this.vy = (Math.random() - 0.5) * 1.8;
-            this.radius = Math.random() * 1.5 + 2.5;
-            this.alpha = 0; // fade-in on birth
-            this.age = age;
-            this.alive = true;
+            this.vx = (Math.random() - 0.5) * 1.5;
+            this.vy = (Math.random() - 0.5) * 1.5;
+            this.radius = Math.random() * 2 + 2;
+            this.alpha = 0; // fade-in
+            this.age = 0;
+            this.maxAge = 150 + Math.random() * 60; // organic variance
         }
 
         update() {
-            // Wander
-            this.vx += (Math.random() - 0.5) * 0.3;
-            this.vy += (Math.random() - 0.5) * 0.3;
-            // Damping
-            this.vx *= 0.96;
-            this.vy *= 0.96;
-
             this.x += this.vx;
             this.y += this.vy;
 
-            // Bounce off walls
+            // Bouncing logic
             if (this.x < this.radius || this.x > canvas.width - this.radius) {
                 this.vx *= -1;
                 this.x = Math.max(this.radius, Math.min(canvas.width - this.radius, this.x));
@@ -116,258 +100,77 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.y = Math.max(this.radius, Math.min(canvas.height - this.radius, this.y));
             }
 
-            // Fade in
             if (this.alpha < 1) {
-                this.alpha = Math.min(1, this.alpha + 0.15);
+                this.alpha += 0.1;
             }
+
+            this.age++;
         }
 
-        draw(maxAge) {
-            // Color: interpolate green → yellow → red based on age
-            // Newborn = vivid green (16, 220, 96)
-            // Old     = vivid red  (239, 60, 60)
-            const lifeRatio = Math.min(1, this.age / Math.max(1, maxAge * 0.8));
-            let r, g, b;
-            if (lifeRatio < 0.5) {
-                // Green → Yellow
-                const t = lifeRatio * 2;
-                r = Math.round(16 + (255 - 16) * t);
-                g = Math.round(220 + (200 - 220) * t);
-                b = Math.round(96 + (20 - 96) * t);
-            } else {
-                // Yellow → Red
-                const t = (lifeRatio - 0.5) * 2;
-                r = Math.round(255 + (239 - 255) * t);
-                g = Math.round(200 + (60 - 200) * t);
-                b = Math.round(20 + (60 - 20) * t);
-            }
+        draw() {
+            // Interpolate color from green (16, 185, 129) to red (239, 68, 68)
+            const ratio = Math.min(1, this.age / this.maxAge);
+            const r = Math.round(16 + (239 - 16) * ratio);
+            const g = Math.round(185 + (68 - 185) * ratio);
+            const b = Math.round(129 + (68 - 129) * ratio);
 
             ctxCanvas.beginPath();
             ctxCanvas.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
             ctxCanvas.fillStyle = `rgba(${r}, ${g}, ${b}, ${this.alpha})`;
-            ctxCanvas.shadowBlur = 6;
-            ctxCanvas.shadowColor = `rgba(${r}, ${g}, ${b}, 0.7)`;
+            ctxCanvas.shadowBlur = 4;
+            ctxCanvas.shadowColor = `rgba(${r}, ${g}, ${b}, 0.8)`;
             ctxCanvas.fill();
-            ctxCanvas.shadowBlur = 0;
+            ctxCanvas.shadowBlur = 0; // reset
         }
     }
 
-    // The actual population of simulated individuals
-    // For large populations we track count separately and only render a visual sample
-    let individuals = [];      // the real simulated population (capped for perf)
-    let populationCount = 0;   // true population count (can exceed visual cap)
+    let organisms = [];
 
-    // Spawn initial organisms spread across the canvas
-    function spawnInitialPopulation(count) {
-        individuals = [];
-        populationCount = count;
-        const visualCount = Math.min(count, MAX_VISUAL);
-        for (let i = 0; i < visualCount; i++) {
-            individuals.push(new Organism(
-                Math.random() * (canvas.width - 20) + 10,
-                Math.random() * (canvas.height - 20) + 10,
-                Math.floor(Math.random() * MATURITY_AGE) // random starting ages
-            ));
-        }
-    }
+    // Handle particle count adjustments based on population
+    function updateOrganisms(targetCount) {
+        const visualTarget = Math.min(Math.round(targetCount), 350);
 
-    // ─────────────────────────────────────────────────────────
-    //  CORE SIMULATION STEP
-    //  Every generation, each individual independently:
-    //   - Has a chance to reproduce (birth by splitting)
-    //   - Has a chance to die (density-dependent)
-    //  All events are stochastic. Graphs plot REAL counts.
-    // ─────────────────────────────────────────────────────────
-    function simulateGeneration(r, k) {
-        const pop = populationCount;
-        if (pop <= 0) return { births: 0, deaths: 0, perCapitaBirthProb: 0, perCapitaDeathProb: 0 };
-
-        // Symmetric decomposition of the logistic equation:
-        //   Net growth = r * P * (1 - P/K)
-        // Split into:
-        //   Birth rate  b(P) = r * (1 - P/(2K))   — decreases with density
-        //   Death rate  d(P) = r * P/(2K)          — increases with density
-        //   b - d = r * (1 - P/K)  ✓ (standard logistic)
-        //   At P = K:  b = r/2,  d = r/2  → equilibrium exactly at K ✓
-        const densityRatio = pop / k;
-
-        const perCapitaBirthProb = Math.max(0, Math.min(1, r * (1 - densityRatio / 2)));
-        const perCapitaDeathProb = Math.max(0, Math.min(1, r * densityRatio / 2));
-
-        // Simulate births and deaths stochastically
-        // For small populations: exact per-individual coin flips
-        // For large populations: binomial normal approximation for speed
-        let births = 0;
-        let deaths = 0;
-
-        if (pop <= 500) {
-            // Exact stochastic: flip a coin for each individual
-            for (let i = 0; i < pop; i++) {
-                if (Math.random() < perCapitaBirthProb) {
-                    births++;
-                }
-                if (Math.random() < perCapitaDeathProb) {
-                    deaths++;
-                }
-            }
-        } else {
-            // Binomial approximation via Normal(μ, σ²) for large populations
-            const birthMean = pop * perCapitaBirthProb;
-            const birthStd = Math.sqrt(pop * perCapitaBirthProb * (1 - perCapitaBirthProb));
-            births = Math.max(0, Math.round(birthMean + boxMullerRandom() * birthStd));
-
-            const deathMean = pop * perCapitaDeathProb;
-            const deathStd = Math.sqrt(pop * perCapitaDeathProb * (1 - perCapitaDeathProb));
-            deaths = Math.max(0, Math.round(deathMean + boxMullerRandom() * deathStd));
-        }
-
-        // Ensure we don't kill more than exist
-        deaths = Math.min(deaths, pop);
-
-        // Update true population count
-        populationCount = pop + births - deaths;
-        populationCount = Math.max(0, populationCount);
-
-        // ─── Update visual organisms ───
-        updateVisualOrganisms(births, deaths);
-
-        return { births, deaths, perCapitaBirthProb, perCapitaDeathProb };
-    }
-
-    // Box-Muller transform for normal random numbers
-    function boxMullerRandom() {
-        let u = 0, v = 0;
-        while (u === 0) u = Math.random();
-        while (v === 0) v = Math.random();
-        return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
-    }
-
-    // ─────────────────────────────────────────────────────────
-    //  VISUAL ORGANISM MANAGEMENT
-    //  Births = splitting animation (child spawns next to parent)
-    //  Deaths = remove oldest organisms
-    // ─────────────────────────────────────────────────────────
-    function updateVisualOrganisms(births, deaths) {
-        const visualTarget = Math.min(populationCount, MAX_VISUAL);
-        const scaleFactor = populationCount > 0 ? visualTarget / populationCount : 0;
-        const visualBirths = Math.round(births * scaleFactor);
-        const visualDeaths = Math.round(deaths * scaleFactor);
-
-        // Age all living organisms
-        for (const org of individuals) {
-            org.age++;
-        }
-
-        // Kill oldest organisms first (simulating death of oldest)
-        let toKill = Math.min(visualDeaths, individuals.length);
-        if (toKill > 0) {
-            // Sort by age descending, mark oldest as dead
-            individuals.sort((a, b) => b.age - a.age);
-            for (let i = 0; i < toKill; i++) {
-                individuals[i].alive = false;
-            }
-            individuals = individuals.filter(o => o.alive);
-        }
-
-        // Birth by splitting: pick a random parent, spawn child nearby
-        const birthsToAdd = Math.min(visualBirths, MAX_VISUAL - individuals.length);
-        for (let i = 0; i < birthsToAdd; i++) {
-            if (individuals.length === 0) {
-                // Spontaneous if no visible parents
-                individuals.push(new Organism(
+        if (organisms.length < visualTarget) {
+            const toAdd = visualTarget - organisms.length;
+            for (let i = 0; i < toAdd; i++) {
+                organisms.push(new Organism(
                     Math.random() * (canvas.width - 20) + 10,
-                    Math.random() * (canvas.height - 20) + 10,
-                    0
-                ));
-            } else {
-                // Pick random parent
-                const parent = individuals[Math.floor(Math.random() * individuals.length)];
-                // Child spawns near parent with small offset (splitting effect)
-                const angle = Math.random() * Math.PI * 2;
-                const dist = parent.radius * 3 + Math.random() * 8;
-                const childX = Math.max(5, Math.min(canvas.width - 5, parent.x + Math.cos(angle) * dist));
-                const childY = Math.max(5, Math.min(canvas.height - 5, parent.y + Math.sin(angle) * dist));
-                const child = new Organism(childX, childY, 0);
-                // Give child a slight push away from parent
-                child.vx = Math.cos(angle) * 1.2;
-                child.vy = Math.sin(angle) * 1.2;
-                individuals.push(child);
-            }
-        }
-
-        // If visual count drifted from target, adjust gently
-        while (individuals.length > visualTarget + 5) {
-            // Remove oldest excess
-            let oldestIdx = 0;
-            for (let i = 1; i < individuals.length; i++) {
-                if (individuals[i].age > individuals[oldestIdx].age) oldestIdx = i;
-            }
-            individuals.splice(oldestIdx, 1);
-        }
-        while (individuals.length < visualTarget - 5 && individuals.length < MAX_VISUAL) {
-            if (individuals.length > 0) {
-                const parent = individuals[Math.floor(Math.random() * individuals.length)];
-                const angle = Math.random() * Math.PI * 2;
-                const dist = parent.radius * 3 + Math.random() * 8;
-                const cx = Math.max(5, Math.min(canvas.width - 5, parent.x + Math.cos(angle) * dist));
-                const cy = Math.max(5, Math.min(canvas.height - 5, parent.y + Math.sin(angle) * dist));
-                individuals.push(new Organism(cx, cy, Math.floor(Math.random() * MATURITY_AGE)));
-            } else {
-                individuals.push(new Organism(
-                    Math.random() * (canvas.width - 20) + 10,
-                    Math.random() * (canvas.height - 20) + 10,
-                    0
+                    Math.random() * (canvas.height - 20) + 10
                 ));
             }
+        } else if (organisms.length > visualTarget) {
+            organisms.splice(visualTarget);
         }
     }
 
-    // ─────────────────────────────────────────────────────────
-    //  CANVAS ANIMATION LOOP
-    // ─────────────────────────────────────────────────────────
+    // Particle animation loop
     function animate() {
         ctxCanvas.fillStyle = '#0b0c15';
         ctxCanvas.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Draw habitat boundary
+        // Draw habitat boundaries/capacity lines
         ctxCanvas.strokeStyle = 'rgba(236, 72, 153, 0.15)';
         ctxCanvas.lineWidth = 1.5;
         ctxCanvas.setLineDash([5, 5]);
         ctxCanvas.strokeRect(5, 5, canvas.width - 10, canvas.height - 10);
         ctxCanvas.setLineDash([]);
 
-        // Compute max age for color scaling
-        let maxAge = 1;
-        for (const org of individuals) {
-            if (org.age > maxAge) maxAge = org.age;
-        }
-
-        // Update and draw each organism
-        for (const org of individuals) {
+        organisms.forEach(org => {
             org.update();
-            org.draw(maxAge);
-        }
-
-        // Population count overlay
-        if (populationCount > 0) {
-            ctxCanvas.fillStyle = 'rgba(255, 255, 255, 0.08)';
-            ctxCanvas.font = 'bold 11px Outfit, sans-serif';
-            ctxCanvas.textAlign = 'right';
-            ctxCanvas.fillText(`Individuals: ${populationCount}`, canvas.width - 12, canvas.height - 10);
-            ctxCanvas.textAlign = 'left';
-        }
+            org.draw();
+        });
 
         requestAnimationFrame(animate);
     }
     animate();
 
-    // ─────────────────────────────────────────────────────────
-    //  CHART INITIALIZATION
-    // ─────────────────────────────────────────────────────────
+    // Initialize the Charts
     function initCharts(carryingCapacity, initialGrowthRate) {
         if (typeof Chart !== 'undefined') {
             // Main Population Chart
-            if (populationChart) populationChart.destroy();
+            if (populationChart) {
+                populationChart.destroy();
+            }
 
             populationChart = new Chart(ctxChart, {
                 type: 'line',
@@ -389,7 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             yAxisID: 'y'
                         },
                         {
-                            label: 'Net Growth (ΔP)',
+                            label: 'Growth Rate (ΔP)',
                             data: historyGrowthRateData,
                             borderColor: '#10b981',
                             backgroundColor: 'rgba(16, 185, 129, 0.04)',
@@ -461,11 +264,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             type: 'linear',
                             display: true,
                             position: 'right',
-                            grid: { drawOnChartArea: false },
+                            grid: { drawOnChartArea: false }, 
                             ticks: { color: '#9ca3af', font: { family: 'Plus Jakarta Sans' } },
                             title: {
                                 display: true,
-                                text: 'Net Growth (ΔP / gen)',
+                                text: 'Growth Rate (ΔP / step)',
                                 color: '#10b981',
                                 font: { family: 'Plus Jakarta Sans', size: 12, weight: 'bold' }
                             }
@@ -475,7 +278,9 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             // Per-Capita Rates Chart
-            if (ratesChart) ratesChart.destroy();
+            if (ratesChart) {
+                ratesChart.destroy();
+            }
 
             ratesChart = new Chart(ctxRatesChart, {
                 type: 'line',
@@ -538,9 +343,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             type: 'linear',
                             display: true,
                             suggestedMin: 0,
+                            suggestedMax: initialGrowthRate * 1.5,
                             grid: { color: 'rgba(255, 255, 255, 0.04)' },
-                            ticks: {
-                                color: '#9ca3af',
+                            ticks: { 
+                                color: '#9ca3af', 
                                 font: { family: 'Plus Jakarta Sans' },
                                 callback: function(value) {
                                     return (value * 100).toFixed(1) + '%';
@@ -548,7 +354,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             },
                             title: {
                                 display: true,
-                                text: 'Rate per Capita (actual)',
+                                text: 'Rate per Capita',
                                 color: '#9ca3af',
                                 font: { family: 'Plus Jakarta Sans', size: 12, weight: 'bold' }
                             }
@@ -558,7 +364,9 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             // Total Rates Chart
-            if (totalRatesChart) totalRatesChart.destroy();
+            if (totalRatesChart) {
+                totalRatesChart.destroy();
+            }
 
             totalRatesChart = new Chart(ctxTotalRatesChart, {
                 type: 'line',
@@ -623,11 +431,12 @@ document.addEventListener('DOMContentLoaded', () => {
                             type: 'linear',
                             display: true,
                             suggestedMin: 0,
+                            suggestedMax: carryingCapacity * initialGrowthRate * 1.2,
                             grid: { color: 'rgba(255, 255, 255, 0.04)' },
                             ticks: { color: '#9ca3af', font: { family: 'Plus Jakarta Sans' } },
                             title: {
                                 display: true,
-                                text: 'Total Individuals / gen (actual)',
+                                text: 'Total Individuals / gen',
                                 color: '#9ca3af',
                                 font: { family: 'Plus Jakarta Sans', size: 12, weight: 'bold' }
                             }
@@ -637,15 +446,13 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
         } else {
+            // Fallback drawing when offline (no Chart.js)
             drawFallbackChart(carryingCapacity, initialGrowthRate);
         }
     }
 
-    // ─────────────────────────────────────────────────────────
-    //  FALLBACK CHART (offline / no Chart.js)
-    // ─────────────────────────────────────────────────────────
     function drawFallbackChart(carryingCapacity, initialGrowthRate) {
-        const maxGen = Math.max(10, parseInt(inputMaxGenerations.value) || 100);
+        // Reset canvas dimensions to fit their parents
         canvasChart.width = canvasChart.parentElement.clientWidth;
         canvasChart.height = Math.max(280, canvasChart.parentElement.clientHeight || 280);
 
@@ -667,7 +474,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ctxPop.font = '12px Outfit, sans-serif';
         ctxPop.fillText('Offline Mode (Chart.js failed to load)', 20, 25);
 
-        // Grid lines
+        // Pop Chart Grid lines
         ctxPop.strokeStyle = 'rgba(255, 255, 255, 0.04)';
         ctxPop.lineWidth = 1;
         for (let i = 0; i <= 4; i++) {
@@ -681,7 +488,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const maxVal = Math.max(carryingCapacity * 1.2, ...historyPopData, 100);
         const maxGrowthVal = Math.max(...historyGrowthRateData, 5);
 
-        // Carrying capacity line
+        // Pop Chart Carrying capacity line
         const capY = padding + graphH - ((carryingCapacity / maxVal) * graphH);
         ctxPop.strokeStyle = '#ec4899';
         ctxPop.lineWidth = 1.5;
@@ -700,7 +507,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ctxPop.lineWidth = 3;
             ctxPop.beginPath();
             for (let i = 0; i < historyPopData.length; i++) {
-                const x = padding + (i / maxGen) * graphW;
+                const x = padding + (i / maxGenerations) * graphW;
                 const y = padding + graphH - ((historyPopData[i] / maxVal) * graphH);
                 if (i === 0) ctxPop.moveTo(x, y);
                 else ctxPop.lineTo(x, y);
@@ -714,7 +521,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ctxPop.lineWidth = 2;
             ctxPop.beginPath();
             for (let i = 0; i < historyGrowthRateData.length; i++) {
-                const x = padding + (i / maxGen) * graphW;
+                const x = padding + (i / maxGenerations) * graphW;
                 const y = padding + graphH - ((historyGrowthRateData[i] / maxGrowthVal) * graphH);
                 if (i === 0) ctxPop.moveTo(x, y);
                 else ctxPop.lineTo(x, y);
@@ -722,10 +529,12 @@ document.addEventListener('DOMContentLoaded', () => {
             ctxPop.stroke();
         }
 
-        // --- PER-CAPITA RATES ---
+        // --- DRAW PER-CAPITA RATES CHART ---
         const ctxRate = ctxRatesChart;
         ctxRate.fillStyle = '#0b0c15';
         ctxRate.fillRect(0, 0, canvasRatesChart.width, canvasRatesChart.height);
+
+        // Grid lines for rates chart
         ctxRate.strokeStyle = 'rgba(255, 255, 255, 0.04)';
         ctxRate.lineWidth = 1;
         for (let i = 0; i <= 4; i++) {
@@ -735,25 +544,30 @@ document.addEventListener('DOMContentLoaded', () => {
             ctxRate.lineTo(canvasRatesChart.width - padding, y);
             ctxRate.stroke();
         }
+
         const maxRateVal = Math.max(initialGrowthRate * 1.5, ...historyDeathRateData, 0.1);
+
+        // Birth Rate (Blue)
         if (historyBirthRateData.length > 0) {
             ctxRate.strokeStyle = '#3b82f6';
             ctxRate.lineWidth = 2.5;
             ctxRate.beginPath();
             for (let i = 0; i < historyBirthRateData.length; i++) {
-                const x = padding + (i / maxGen) * graphW;
+                const x = padding + (i / maxGenerations) * graphW;
                 const y = padding + graphH - ((historyBirthRateData[i] / maxRateVal) * graphH);
                 if (i === 0) ctxRate.moveTo(x, y);
                 else ctxRate.lineTo(x, y);
             }
             ctxRate.stroke();
         }
+
+        // Death Rate (Orange)
         if (historyDeathRateData.length > 0) {
             ctxRate.strokeStyle = '#f97316';
             ctxRate.lineWidth = 2.5;
             ctxRate.beginPath();
             for (let i = 0; i < historyDeathRateData.length; i++) {
-                const x = padding + (i / maxGen) * graphW;
+                const x = padding + (i / maxGenerations) * graphW;
                 const y = padding + graphH - ((historyDeathRateData[i] / maxRateVal) * graphH);
                 if (i === 0) ctxRate.moveTo(x, y);
                 else ctxRate.lineTo(x, y);
@@ -761,10 +575,12 @@ document.addEventListener('DOMContentLoaded', () => {
             ctxRate.stroke();
         }
 
-        // --- TOTAL RATES ---
+        // --- DRAW TOTAL RATES CHART ---
         const ctxTotalRate = ctxTotalRatesChart;
         ctxTotalRate.fillStyle = '#0b0c15';
         ctxTotalRate.fillRect(0, 0, canvasTotalRatesChart.width, canvasTotalRatesChart.height);
+
+        // Grid lines for total rates chart
         ctxTotalRate.strokeStyle = 'rgba(255, 255, 255, 0.04)';
         ctxTotalRate.lineWidth = 1;
         for (let i = 0; i <= 4; i++) {
@@ -774,25 +590,30 @@ document.addEventListener('DOMContentLoaded', () => {
             ctxTotalRate.lineTo(canvasTotalRatesChart.width - padding, y);
             ctxTotalRate.stroke();
         }
+
         const maxTotalRateVal = Math.max(carryingCapacity * initialGrowthRate * 1.2, ...historyTotalBirthsData, ...historyTotalDeathsData, 10);
+
+        // Total Births (Light Blue)
         if (historyTotalBirthsData.length > 0) {
             ctxTotalRate.strokeStyle = '#60a5fa';
             ctxTotalRate.lineWidth = 2.5;
             ctxTotalRate.beginPath();
             for (let i = 0; i < historyTotalBirthsData.length; i++) {
-                const x = padding + (i / maxGen) * graphW;
+                const x = padding + (i / maxGenerations) * graphW;
                 const y = padding + graphH - ((historyTotalBirthsData[i] / maxTotalRateVal) * graphH);
                 if (i === 0) ctxTotalRate.moveTo(x, y);
                 else ctxTotalRate.lineTo(x, y);
             }
             ctxTotalRate.stroke();
         }
+
+        // Total Deaths (Orange)
         if (historyTotalDeathsData.length > 0) {
             ctxTotalRate.strokeStyle = '#f97316';
             ctxTotalRate.lineWidth = 2.5;
             ctxTotalRate.beginPath();
             for (let i = 0; i < historyTotalDeathsData.length; i++) {
-                const x = padding + (i / maxGen) * graphW;
+                const x = padding + (i / maxGenerations) * graphW;
                 const y = padding + graphH - ((historyTotalDeathsData[i] / maxTotalRateVal) * graphH);
                 if (i === 0) ctxTotalRate.moveTo(x, y);
                 else ctxTotalRate.lineTo(x, y);
@@ -806,9 +627,7 @@ document.addEventListener('DOMContentLoaded', () => {
         speedVal.textContent = `${speedSlider.value}ms / generation`;
     });
 
-    // ─────────────────────────────────────────────────────────
-    //  RUN SIMULATION (step-by-step, animated)
-    // ─────────────────────────────────────────────────────────
+    // Run Step-by-Step Simulation
     function startSimulation() {
         resetSimulation();
 
@@ -816,7 +635,6 @@ document.addEventListener('DOMContentLoaded', () => {
         inputInitialPop.disabled = true;
         inputGrowthRate.disabled = true;
         inputCarryingCapacity.disabled = true;
-        inputMaxGenerations.disabled = true;
         btnStart.disabled = true;
         btnInstant.disabled = true;
         btnReset.disabled = false;
@@ -824,20 +642,19 @@ document.addEventListener('DOMContentLoaded', () => {
         simStatus.textContent = 'Running';
         simStatus.className = 'badge running';
 
-        const p0 = Math.max(1, Math.round(parseFloat(inputInitialPop.value) || 10));
+        const p0 = parseFloat(inputInitialPop.value) || 10;
         const k = parseFloat(inputCarryingCapacity.value) || 500;
         const r = parseFloat(inputGrowthRate.value) || 0.1;
 
+        currentPopulation = p0;
         currentGeneration = 0;
-        spawnInitialPopulation(p0);
 
         initCharts(k, r);
         runGenerationStep();
     }
 
     function runGenerationStep() {
-        const maxGen = Math.max(10, parseInt(inputMaxGenerations.value) || 100);
-        if (currentGeneration > maxGen || populationCount <= 0) {
+        if (currentGeneration > maxGenerations) {
             completeSimulation();
             return;
         }
@@ -845,47 +662,35 @@ document.addEventListener('DOMContentLoaded', () => {
         const r = parseFloat(inputGrowthRate.value) || 0.1;
         const k = parseFloat(inputCarryingCapacity.value) || 500;
 
-        // Record state BEFORE the generation step
-        const popBefore = populationCount;
+        // Birth and death rate calculation
+        const perCapitaBirth = r;
+        const perCapitaDeath = r * (currentPopulation / k);
+        
+        const totalBirths = perCapitaBirth * currentPopulation;
+        const totalDeaths = perCapitaDeath * currentPopulation;
+        const growthRateVal = totalBirths - totalDeaths;
+        
+        const nextPop = currentPopulation + growthRateVal;
+        currentPopulation = Math.max(0, nextPop);
 
-        if (currentGeneration === 0) {
-            // Generation 0: just record initial state, no births/deaths yet
-            historyLabels.push(0);
-            historyPopData.push(popBefore);
-            historyCapData.push(k);
-            historyGrowthRateData.push(0);
-            historyBirthRateData.push(0);
-            historyDeathRateData.push(0);
-            historyTotalBirthsData.push(0);
-            historyTotalDeathsData.push(0);
-        } else {
-            // Simulate one generation — real stochastic events
-            const result = simulateGeneration(r, k);
-            const netGrowth = result.births - result.deaths;
-
-            // Per-capita rates from ACTUAL events
-            const actualBirthRate = popBefore > 0 ? result.births / popBefore : 0;
-            const actualDeathRate = popBefore > 0 ? result.deaths / popBefore : 0;
-
-            historyLabels.push(currentGeneration);
-            historyPopData.push(populationCount);
-            historyCapData.push(k);
-            historyGrowthRateData.push(netGrowth);
-            historyBirthRateData.push(Math.round(actualBirthRate * 1000) / 1000);
-            historyDeathRateData.push(Math.round(actualDeathRate * 1000) / 1000);
-            historyTotalBirthsData.push(result.births);
-            historyTotalDeathsData.push(result.deaths);
-
-            // Update births/deaths stats
-            valBirths.textContent = result.births.toLocaleString();
-            valDeaths.textContent = result.deaths.toLocaleString();
-        }
+        // Save statistics
+        historyLabels.push(currentGeneration);
+        historyPopData.push(Math.round(currentPopulation));
+        historyCapData.push(k);
+        historyGrowthRateData.push(Math.round(growthRateVal * 100) / 100);
+        historyBirthRateData.push(Math.round(perCapitaBirth * 1000) / 1000);
+        historyDeathRateData.push(Math.round(perCapitaDeath * 1000) / 1000);
+        historyTotalBirthsData.push(Math.round(totalBirths * 10) / 10);
+        historyTotalDeathsData.push(Math.round(totalDeaths * 10) / 10);
 
         // Update UI Stats
         valTime.textContent = currentGeneration;
-        valPopulation.textContent = populationCount.toLocaleString();
-        const capacityPct = Math.min(100, Math.round((populationCount / k) * 100));
+        valPopulation.textContent = Math.round(currentPopulation).toLocaleString();
+        const capacityPct = Math.min(100, Math.round((currentPopulation / k) * 100));
         valUtil.textContent = `${capacityPct}%`;
+
+        // Render Canvas Blobs
+        updateOrganisms(currentPopulation);
 
         // Update Charts
         if (typeof Chart !== 'undefined') {
@@ -901,66 +706,53 @@ document.addEventListener('DOMContentLoaded', () => {
         simInterval = setTimeout(runGenerationStep, intervalSpeed);
     }
 
-    // ─────────────────────────────────────────────────────────
-    //  RUN INSTANTLY (all generations at once)
-    // ─────────────────────────────────────────────────────────
+    // Run Simulation Instantly
     function runInstant() {
         resetSimulation();
 
         inputInitialPop.disabled = true;
         inputGrowthRate.disabled = true;
         inputCarryingCapacity.disabled = true;
-        inputMaxGenerations.disabled = true;
         btnStart.disabled = true;
         btnInstant.disabled = true;
         btnReset.disabled = false;
 
-        const p0 = Math.max(1, Math.round(parseFloat(inputInitialPop.value) || 10));
+        const p0 = parseFloat(inputInitialPop.value) || 10;
         const r = parseFloat(inputGrowthRate.value) || 0.1;
         const k = parseFloat(inputCarryingCapacity.value) || 500;
 
-        spawnInitialPopulation(p0);
-
-        // Generation 0
-        historyLabels.push(0);
-        historyPopData.push(populationCount);
-        historyCapData.push(k);
-        historyGrowthRateData.push(0);
-        historyBirthRateData.push(0);
-        historyDeathRateData.push(0);
-        historyTotalBirthsData.push(0);
-        historyTotalDeathsData.push(0);
-
-        const maxGen = Math.max(10, parseInt(inputMaxGenerations.value) || 100);
-        for (let t = 1; t <= maxGen; t++) {
-            const popBefore = populationCount;
-            const result = simulateGeneration(r, k);
-            const netGrowth = result.births - result.deaths;
-            const actualBirthRate = popBefore > 0 ? result.births / popBefore : 0;
-            const actualDeathRate = popBefore > 0 ? result.deaths / popBefore : 0;
-
+        currentPopulation = p0;
+        
+        for (let t = 0; t <= maxGenerations; t++) {
             historyLabels.push(t);
-            historyPopData.push(populationCount);
+            historyPopData.push(Math.round(currentPopulation));
             historyCapData.push(k);
-            historyGrowthRateData.push(netGrowth);
-            historyBirthRateData.push(Math.round(actualBirthRate * 1000) / 1000);
-            historyDeathRateData.push(Math.round(actualDeathRate * 1000) / 1000);
-            historyTotalBirthsData.push(result.births);
-            historyTotalDeathsData.push(result.deaths);
 
-            if (populationCount <= 0) break;
+            const perCapitaBirth = r;
+            const perCapitaDeath = r * (currentPopulation / k);
+            
+            const totalBirths = perCapitaBirth * currentPopulation;
+            const totalDeaths = perCapitaDeath * currentPopulation;
+            const growthRateVal = totalBirths - totalDeaths;
+            
+            historyGrowthRateData.push(Math.round(growthRateVal * 100) / 100);
+            historyBirthRateData.push(Math.round(perCapitaBirth * 1000) / 1000);
+            historyDeathRateData.push(Math.round(perCapitaDeath * 1000) / 1000);
+            historyTotalBirthsData.push(Math.round(totalBirths * 10) / 10);
+            historyTotalDeathsData.push(Math.round(totalDeaths * 10) / 10);
+
+            const nextPop = currentPopulation + growthRateVal;
+            currentPopulation = Math.max(0, nextPop);
         }
 
         // End values update
-        const lastIdx = historyPopData.length - 1;
-        valTime.textContent = historyLabels[lastIdx];
-        valPopulation.textContent = historyPopData[lastIdx].toLocaleString();
-        const capacityPct = Math.min(100, Math.round((historyPopData[lastIdx] / k) * 100));
+        valTime.textContent = maxGenerations;
+        valPopulation.textContent = Math.round(historyPopData[maxGenerations]).toLocaleString();
+        const capacityPct = Math.min(100, Math.round((historyPopData[maxGenerations] / k) * 100));
         valUtil.textContent = `${capacityPct}%`;
-        valBirths.textContent = historyTotalBirthsData[lastIdx].toLocaleString();
-        valDeaths.textContent = historyTotalDeathsData[lastIdx].toLocaleString();
 
         initCharts(k, r);
+        updateOrganisms(historyPopData[maxGenerations]);
         if (typeof Chart !== 'undefined') {
             if (populationChart) populationChart.update();
             if (ratesChart) ratesChart.update();
@@ -973,8 +765,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function completeSimulation() {
         clearTimeout(simInterval);
-        simStatus.textContent = populationCount <= 0 ? 'Extinct' : 'Stabilized';
-        simStatus.className = populationCount <= 0 ? 'badge extinct' : 'badge completed';
+        simStatus.textContent = 'Stabilized';
+        simStatus.className = 'badge completed';
         btnStart.disabled = true;
         btnInstant.disabled = true;
     }
@@ -994,7 +786,6 @@ document.addEventListener('DOMContentLoaded', () => {
         inputInitialPop.disabled = false;
         inputGrowthRate.disabled = false;
         inputCarryingCapacity.disabled = false;
-        inputMaxGenerations.disabled = false;
         btnStart.disabled = false;
         btnInstant.disabled = false;
         btnReset.disabled = true;
@@ -1002,15 +793,12 @@ document.addEventListener('DOMContentLoaded', () => {
         valTime.textContent = '0';
         valPopulation.textContent = '0';
         valUtil.textContent = '0%';
-        valBirths.textContent = '0';
-        valDeaths.textContent = '0';
 
         simStatus.textContent = 'Idle';
         simStatus.className = 'badge';
 
-        individuals = [];
-        populationCount = 0;
-
+        organisms = [];
+        
         const k = parseFloat(inputCarryingCapacity.value) || 500;
         const r = parseFloat(inputGrowthRate.value) || 0.1;
         initCharts(k, r);

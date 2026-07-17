@@ -27,14 +27,14 @@ body {
     min-height: 100vh;
     display: flex;
     justify-content: center;
+    align-items: center;
     overflow-x: hidden;
     position: relative;
-    padding: 1rem 0 3rem;
 }
 
 /* Background decorative orbs */
 .glow-orb {
-    position: fixed;
+    position: absolute;
     width: 500px;
     height: 500px;
     border-radius: 50%;
@@ -57,31 +57,31 @@ body {
 }
 
 .container {
-    width: 96%;
-    max-width: 1500px;
+    width: 95%;
+    max-width: 1300px;
     z-index: 10;
-    padding: 1rem 0;
+    padding: 1.5rem 0;
 }
 
 header {
     text-align: center;
-    margin-bottom: 1.5rem;
+    margin-bottom: 2rem;
 }
 
 header h1 {
     font-family: var(--font-heading);
-    font-size: 2.4rem;
+    font-size: 2.6rem;
     font-weight: 800;
     background: linear-gradient(135deg, #fff 40%, var(--accent) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    margin-bottom: 0.4rem;
+    margin-bottom: 0.5rem;
     letter-spacing: -0.02em;
 }
 
 .subtitle {
     color: var(--text-secondary);
-    font-size: 0.95rem;
+    font-size: 1rem;
 }
 
 /* Glassmorphism panel styling */
@@ -90,96 +90,50 @@ header h1 {
     border: 1px solid var(--card-border);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border-radius: 20px;
-    padding: 1.5rem;
+    border-radius: 24px;
+    padding: 2rem;
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
 }
 
-/* ────────────────────────────────────────────
-   DASHBOARD GRID
-   Left: Controls | Center: Habitat | Right: Stats
-   Bottom: 3 Charts in a row
-   ──────────────────────────────────────────── */
 .dashboard {
     display: grid;
-    grid-template-columns: 260px 1fr 260px;
-    grid-template-rows: auto auto;
-    gap: 1.5rem;
-    align-items: start;
+    grid-template-columns: 1fr 2fr;
+    gap: 2rem;
 }
 
-@media (max-width: 1200px) {
-    .dashboard {
-        grid-template-columns: 1fr 1fr;
-        grid-template-rows: auto auto auto;
-    }
-    .control-panel {
-        grid-column: 1;
-        grid-row: 1;
-    }
-    .habitat-panel {
-        grid-column: 1 / -1;
-        grid-row: 2;
-    }
-    .stats-side {
-        grid-column: 2;
-        grid-row: 1;
-    }
-    .charts-row {
-        grid-column: 1 / -1;
-        grid-row: 3;
-    }
-}
-
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
     .dashboard {
         grid-template-columns: 1fr;
     }
-    .control-panel,
-    .habitat-panel,
-    .stats-side,
-    .charts-row {
-        grid-column: 1;
-    }
-    .charts-row {
-        grid-template-columns: 1fr !important;
-    }
 }
 
-/* ── Control Panel ── */
+/* Control Panel Style */
 .control-panel {
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 1.5rem;
 }
 
-.control-panel h2,
-.habitat-panel h2,
-.stats-side h2,
-.chart-box h3 {
+.control-panel h2, .visualizer h2 {
     font-family: var(--font-heading);
+    font-size: 1.4rem;
     font-weight: 600;
-}
-
-.control-panel h2,
-.stats-side h2 {
-    font-size: 1.15rem;
 }
 
 .input-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 0.85rem;
+    gap: 1rem;
 }
 
 .input-group {
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: 0.4rem;
 }
 
 .input-group label {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     color: var(--text-secondary);
     font-weight: 500;
 }
@@ -187,11 +141,11 @@ header h1 {
 .input-group input {
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid var(--card-border);
-    padding: 0.6rem 0.8rem;
-    border-radius: 10px;
+    padding: 0.75rem 0.9rem;
+    border-radius: 12px;
     color: #fff;
     font-family: var(--font-body);
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     outline: none;
     transition: all 0.3s ease;
 }
@@ -201,19 +155,19 @@ header h1 {
     box-shadow: 0 0 10px rgba(99, 102, 241, 0.25);
 }
 
-/* Buttons */
+/* Button stylings */
 .button-group {
     display: grid;
     grid-template-columns: 1fr;
-    gap: 0.6rem;
+    gap: 0.75rem;
 }
 
 .btn {
-    padding: 0.65rem 1rem;
-    border-radius: 10px;
+    padding: 0.75rem 1.25rem;
+    border-radius: 12px;
     font-family: var(--font-heading);
     font-weight: 600;
-    font-size: 0.88rem;
+    font-size: 0.95rem;
     cursor: pointer;
     border: none;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -265,11 +219,59 @@ header h1 {
     box-shadow: none !important;
 }
 
-/* Speed slider */
+/* Stats Panel styles */
+.stats-panel {
+    border-top: 1px solid var(--card-border);
+    padding-top: 1.25rem;
+}
+
+.stats-panel h3 {
+    font-family: var(--font-heading);
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.015);
+    border: 1px solid var(--card-border);
+    padding: 0.9rem;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.stat-val {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.stat-val.highlight-pop {
+    color: #6366f1;
+}
+
+.stat-val.highlight-cap {
+    color: #ec4899;
+}
+
+/* Slider Controls */
 .speed-control {
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: 0.4rem;
 }
 
 .speed-control label {
@@ -283,26 +285,16 @@ header h1 {
 }
 
 #speedVal {
-    font-size: 0.72rem;
+    font-size: 0.75rem;
     color: var(--text-secondary);
     text-align: right;
 }
 
-/* ── Habitat Panel (Center Focal Point) ── */
-.habitat-panel {
+/* Visualizer (Chart & Habitat area) styling */
+.visualizer {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
-}
-
-.habitat-panel h2 {
-    font-size: 1.3rem;
-}
-
-.habitat-legend {
-    font-size: 0.78rem;
-    color: var(--text-secondary);
-    letter-spacing: 0.01em;
+    gap: 1.5rem;
 }
 
 .chart-header {
@@ -311,16 +303,6 @@ header h1 {
     align-items: center;
 }
 
-#habitatCanvas {
-    background: #0b0c15;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 14px;
-    width: 100%;
-    height: 400px;
-    display: block;
-}
-
-/* Badges */
 .badge {
     background: rgba(255, 255, 255, 0.08);
     padding: 0.3rem 0.8rem;
@@ -335,12 +317,6 @@ header h1 {
     background: rgba(99, 102, 241, 0.15);
     color: #818cf8;
     border: 1px solid rgba(99, 102, 241, 0.25);
-    animation: pulse-badge 1.5s infinite ease-in-out;
-}
-
-@keyframes pulse-badge {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.6; }
 }
 
 .badge.completed {
@@ -349,85 +325,44 @@ header h1 {
     border: 1px solid rgba(16, 185, 129, 0.25);
 }
 
-.badge.extinct {
-    background: rgba(239, 68, 68, 0.15);
-    color: var(--accent-red);
-    border: 1px solid rgba(239, 68, 68, 0.25);
-}
-
-/* ── Stats Side Panel (Right) ── */
-.stats-side {
+.visualization-layout {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-}
-
-.stats-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 0.65rem;
-}
-
-.stat-card {
-    background: rgba(255, 255, 255, 0.015);
-    border: 1px solid var(--card-border);
-    padding: 0.8rem;
-    border-radius: 12px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.stat-label {
-    font-size: 0.78rem;
-    color: var(--text-secondary);
-}
-
-.stat-val {
-    font-family: var(--font-heading);
-    font-weight: 700;
-    font-size: 1.05rem;
-}
-
-.stat-val.highlight-pop {
-    color: #6366f1;
-}
-
-.stat-val.highlight-cap {
-    color: #ec4899;
-}
-
-.stat-val.highlight-birth {
-    color: #60a5fa;
-}
-
-.stat-val.highlight-death {
-    color: #f97316;
-}
-
-/* ── Charts Row (Bottom, 3 across) ── */
-.charts-row {
-    grid-column: 1 / -1;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
     gap: 1.5rem;
+    flex-grow: 1;
 }
 
-.chart-box {
+/* Habitat Box */
+.habitat-box {
+    background: rgba(255, 255, 255, 0.01);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 1.25rem;
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
 }
 
-.chart-box h3 {
-    font-size: 0.95rem;
+.habitat-box h3 {
+    font-family: var(--font-heading);
+    font-size: 1rem;
     color: var(--text-secondary);
     font-weight: 500;
 }
 
+#habitatCanvas {
+    background: #0b0c15;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    width: 100%;
+    height: 150px;
+    display: block;
+}
+
+/* Line Chart container */
 .chart-container {
     position: relative;
     flex-grow: 1;
-    min-height: 260px;
+    min-height: 280px;
     width: 100%;
 }

@@ -1,49 +1,89 @@
-# Logistic Population Growth Simulator
+# Agent-Based Population Simulator
 
-A browser-based interactive simulation of population growth exhibiting logistic growth dynamics and stabilization at carrying capacity ($K$), designed in the style of the educational YouTube channel *Primer*.
+A browser-based **individual-level (agent-based) simulation** of population dynamics. Unlike formula-driven simulators, every organism is an independent entity that breeds by splitting and dies stochastically. All graphs plot **real data from actual simulated events**, not derivatives of an equation.
 
 ---
 
-## Mathematical Model & Biological Logic
+## How It Works — Agent-Based Model
 
-The simulator models population growth using the classic **Logistic Growth Equation** derived from density-dependent birth and death dynamics:
+Each organism in the simulation is an independent agent. Every generation, each individual independently:
 
-$$\Delta P = \text{Births} - \text{Deaths}$$
+- **Has a chance to reproduce** (birth by splitting — child appears adjacent to parent)
+- **Has a chance to die** (probability increases with crowding)
 
-In this model, the biological processes are split into per-capita components:
-*   **Constant Per-Capita Birth Rate ($b = r$):** Individuals reproduce at a constant rate regardless of population density. 
-*   **Density-Dependent Per-Capita Death Rate ($d = r \cdot \frac{P}{K}$):** The chance of dying increases linearly as resources run out and space becomes crowded.
+### Birth & Death Rate Decomposition
 
-By substituting these rates, the total population change per step simplifies to:
+The per-capita probabilities use a **symmetric decomposition** of the logistic equation:
 
-$$\Delta P = (r \cdot P) - \left(r \cdot \frac{P^2}{K}\right) = r \cdot P \cdot \left(1 - \frac{P}{K}\right)$$
+| Rate | Formula | At P = K |
+|---|---|---|
+| Birth | $b(P) = r \cdot \left(1 - \frac{P}{2K}\right)$ | $r/2$ |
+| Death | $d(P) = r \cdot \frac{P}{2K}$ | $r/2$ |
+| **Net** | $b - d = r \cdot \left(1 - \frac{P}{K}\right)$ | **0 → equilibrium** |
 
-At carrying capacity ($P = K$), the per-capita death rate ($d$) rises to equal the birth rate ($b$), causing population growth to stop. Births and deaths still occur continuously, but they balance out perfectly.
+At carrying capacity ($P = K$), **organisms don't stop breeding** — births and deaths simply equalize, and total population stabilizes. This matches real biological systems.
+
+### Stochastic Simulation
+
+- **Small populations (≤ 500):** Exact per-individual coin flips (Bernoulli trials)
+- **Large populations (> 500):** Binomial normal approximation for performance
+
+This means each simulation run produces slightly different curves due to random variation — just like in nature.
 
 ---
 
 ## Features
 
-1. **Interactive Parameters Panel**: Real-time inputs for Initial Population ($P_0$), Growth Rate ($r$), Carrying Capacity ($K$), and simulation step speed.
-2. **Three-Tier Visualization Dashboard**:
-   *   **Main Population Graph (S-Curve & Bell-Curve)**: Shows the total population ($P$) sigmoidal curve along with the net growth rate ($\Delta P$), peaking exactly at $K/2$ before stabilizing.
-   *   **Per-Capita Rates Graph (Intersection of Rates)**: Tracks the chance of reproduction ($b$) and death ($d$). Stabilization occurs exactly where the rising orange death rate line intersects the horizontal blue birth rate line.
-   *   **Total Rates Graph (Cumulative Population Change)**: Tracks the cumulative births ($B$) and deaths ($D$) per generation, showing them converge to the same equilibrium ceiling ($r \cdot K$).
-3. **Habitat Visualizer with Age Transitions**:
-   *   A live 2D canvas displaying the population inside a bounded area.
-   *   **Newly born organisms are colored Green** (`rgb(16, 185, 129)`).
-   *   Over time, they **gradually transition into Red** (`rgb(239, 68, 68)`) as they age, providing a clear visual indication of birth timing, growth, and demographic age distribution.
-4. **Resilient Offline Fallback**: If Chart.js fails to load (e.g. if offline), the simulator automatically draws custom canvas-based line charts for all three graphs.
+1. **True Agent-Based Simulation**: Each organism is an independent entity with age, position, velocity, and stochastic birth/death — not a formula evaluation.
+2. **Configurable Parameters**:
+   - Initial Population ($P_0$), Growth Rate ($r$), Carrying Capacity ($K$)
+   - **Generations to Run** — user-configurable (10–1000)
+   - Simulation speed slider
+3. **Habitat-Centered Layout**:
+   - Large live habitat canvas as the **focal centerpiece**
+   - Parameter controls on the left, live stats on the right
+   - Three charts in a row below
+4. **Visual Birth by Splitting**: New organisms spawn adjacent to their parent with a push animation, visually representing cell division / reproduction.
+5. **Age-Based Color Transitions**:
+   - 🟢 **Green** = Newborn
+   - 🟡 **Yellow** = Maturing
+   - 🔴 **Red** = Aging
+6. **Three Real-Data Charts**:
+   - **Population & Net Growth** — actual population count + real net growth per generation
+   - **Per-Capita Birth & Death Rate** — computed from actual event counts (births/population, deaths/population)
+   - **Total Births & Deaths** — raw counts from the simulation each generation
+7. **Live Stats Panel**: Generation, population, capacity utilization, births this generation, deaths this generation
+8. **Resilient Offline Fallback**: Custom canvas-based charts render if Chart.js fails to load.
+9. **Responsive Design**: Adapts from desktop 3-column layout to single-column on mobile.
 
 ---
 
 ## Project Structure
-* [index.html](file:///home/angsuman/extra_spac/population_simulator/index.html) — HTML markup containing control panels, canvas container elements, and UI statistics.
-* [style.css](file:///home/angsuman/extra_spac/population_simulator/style.css) — Custom modern dark theme styles with glassmorphic elements and styling details.
-* [app.js](file:///home/angsuman/extra_spac/population_simulator/app.js) — The logic containing particle engines, growth models, DOM bindings, and graph updates.
-* [README.md](file:///home/angsuman/extra_spac/population_simulator/README.md) — Documentation detailing model logic, equations, and code architecture.
+
+```
+├── index.html                     # HTML layout — habitat-centered dashboard
+├── style.css                      # Dark glassmorphic theme with responsive grid
+├── app.js                         # Agent-based simulation engine, charts, animation
+├── README.md                      # This file
+└── old_formula_simulation/        # Archived original formula-based simulation
+    ├── app.js
+    ├── index.html
+    ├── style.css
+    └── README.md
+```
 
 ---
 
 ## How to Run
-Simply open the [index.html](file:///home/angsuman/extra_spac/population_simulator/index.html) file in any modern web browser to execute the simulator locally. No installation or server required.
+
+Open `index.html` in any modern browser. No server or installation required.
+
+1. Set parameters (P₀, r, K, generations)
+2. Click **Run Simulation** (animated step-by-step) or **Run Instantly** (all at once)
+3. Watch organisms split and die in the habitat while charts update with real data
+
+---
+
+## Previous Version
+
+The original formula-based simulation (logistic growth equation) is preserved in the [`old_formula_simulation/`](old_formula_simulation/) directory for reference.

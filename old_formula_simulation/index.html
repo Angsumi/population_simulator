@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agent-Based Population Simulator</title>
+    <title>Logistic Population Growth Simulator</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -18,14 +18,15 @@
 
     <div class="container">
         <header>
-            <h1>Agent-Based Population Simulator</h1>
-            <p class="subtitle">Individual organisms breed by splitting and die stochastically — all data is from real simulated events, not formulas.</p>
+            <h1>Logistic Population Simulator</h1>
+            <p class="subtitle">Observe how populations grow exponentially before stabilizing at the environment's Carrying Capacity (K).</p>
         </header>
 
         <main class="dashboard">
-            <!-- Left: Parameter Controls -->
+            <!-- Left Side: Controls & Live Stats -->
             <section class="control-panel glass">
-                <h2>Parameters</h2>
+                <h2>Simulator Parameters</h2>
+                
                 <div class="input-grid">
                     <div class="input-group">
                         <label for="initialPop">Initial Population (P₀)</label>
@@ -37,11 +38,7 @@
                     </div>
                     <div class="input-group">
                         <label for="carryingCapacity">Carrying Capacity (K)</label>
-                        <input type="number" id="carryingCapacity" value="500" min="50" max="5000">
-                    </div>
-                    <div class="input-group">
-                        <label for="maxGenerations">Generations to Run</label>
-                        <input type="number" id="maxGenerations" value="100" min="10" max="1000" step="10">
+                        <input type="number" id="carryingCapacity" value="500" min="50" max="2000">
                     </div>
                 </div>
 
@@ -53,6 +50,24 @@
                     <button id="btnReset" class="btn btn-danger" disabled>Reset</button>
                 </div>
 
+                <div class="stats-panel">
+                    <h3>Environment Metrics</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <span class="stat-label">Generation (t)</span>
+                            <span class="stat-val" id="valTime">0</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">Population Size (P)</span>
+                            <span class="stat-val highlight-pop" id="valPopulation">0</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">Capacity Utilization</span>
+                            <span class="stat-val highlight-cap" id="valUtil">0%</span>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="speed-control">
                     <label for="speedSlider">Simulation Speed</label>
                     <input type="range" id="speedSlider" min="20" max="300" value="80">
@@ -60,59 +75,31 @@
                 </div>
             </section>
 
-            <!-- Center: Habitat Visualization (focal point) -->
-            <section class="habitat-panel glass">
+            <!-- Right Side: Visualization -->
+            <section class="visualizer glass">
                 <div class="chart-header">
-                    <h2>Live Habitat</h2>
+                    <h2>Growth Curve & Habitat</h2>
                     <span class="badge" id="simStatus">Idle</span>
                 </div>
-                <p class="habitat-legend">🟢 Newborn &rarr; 🟡 Maturing &rarr; 🔴 Aging &nbsp;&bull;&nbsp; Birth = splitting from parent</p>
-                <canvas id="habitatCanvas"></canvas>
-            </section>
+                
+                <div class="visualization-layout">
+                    <!-- Habitat Canvas representing visual blobs -->
+                    <div class="habitat-box">
+                        <h3>Habitat (Visual Population)</h3>
+                        <canvas id="habitatCanvas"></canvas>
+                    </div>
 
-            <!-- Right: Live Stats -->
-            <section class="stats-side glass">
-                <h2>Environment Metrics</h2>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <span class="stat-label">Generation (t)</span>
-                        <span class="stat-val" id="valTime">0</span>
-                    </div>
-                    <div class="stat-card">
-                        <span class="stat-label">Population Size (P)</span>
-                        <span class="stat-val highlight-pop" id="valPopulation">0</span>
-                    </div>
-                    <div class="stat-card">
-                        <span class="stat-label">Capacity Utilization</span>
-                        <span class="stat-val highlight-cap" id="valUtil">0%</span>
-                    </div>
-                    <div class="stat-card">
-                        <span class="stat-label">Births this Gen</span>
-                        <span class="stat-val highlight-birth" id="valBirths">0</span>
-                    </div>
-                    <div class="stat-card">
-                        <span class="stat-label">Deaths this Gen</span>
-                        <span class="stat-val highlight-death" id="valDeaths">0</span>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Bottom Row: 3 Charts side by side -->
-            <section class="charts-row">
-                <div class="chart-box glass">
-                    <h3>Population &amp; Net Growth</h3>
+                    <!-- Main Population Chart -->
                     <div class="chart-container">
                         <canvas id="populationChart"></canvas>
                     </div>
-                </div>
-                <div class="chart-box glass">
-                    <h3>Per-Capita Birth &amp; Death Rate</h3>
+
+                    <!-- Birth and Death Rates Chart -->
                     <div class="chart-container">
                         <canvas id="ratesChart"></canvas>
                     </div>
-                </div>
-                <div class="chart-box glass">
-                    <h3>Total Births &amp; Deaths</h3>
+
+                    <!-- Total Births and Deaths Chart -->
                     <div class="chart-container">
                         <canvas id="totalRatesChart"></canvas>
                     </div>
