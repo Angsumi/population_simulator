@@ -82,6 +82,8 @@ document.addEventListener('DOMContentLoaded', () => {
             this.vy = (Math.random() - 0.5) * 1.5;
             this.radius = Math.random() * 2 + 2;
             this.alpha = 0; // fade-in
+            this.age = 0;
+            this.maxAge = 150 + Math.random() * 60; // organic variance
         }
 
         update() {
@@ -101,14 +103,22 @@ document.addEventListener('DOMContentLoaded', () => {
             if (this.alpha < 1) {
                 this.alpha += 0.1;
             }
+
+            this.age++;
         }
 
         draw() {
+            // Interpolate color from green (16, 185, 129) to red (239, 68, 68)
+            const ratio = Math.min(1, this.age / this.maxAge);
+            const r = Math.round(16 + (239 - 16) * ratio);
+            const g = Math.round(185 + (68 - 185) * ratio);
+            const b = Math.round(129 + (68 - 129) * ratio);
+
             ctxCanvas.beginPath();
             ctxCanvas.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-            ctxCanvas.fillStyle = `rgba(99, 102, 241, ${this.alpha})`;
+            ctxCanvas.fillStyle = `rgba(${r}, ${g}, ${b}, ${this.alpha})`;
             ctxCanvas.shadowBlur = 4;
-            ctxCanvas.shadowColor = 'rgba(99, 102, 241, 0.8)';
+            ctxCanvas.shadowColor = `rgba(${r}, ${g}, ${b}, 0.8)`;
             ctxCanvas.fill();
             ctxCanvas.shadowBlur = 0; // reset
         }
