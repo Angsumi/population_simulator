@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logistic Population Growth Simulator</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="glow-orb" id="orb-1"></div>
+    <div class="glow-orb" id="orb-2"></div>
+
+    <div class="container">
+        <header>
+            <h1>Logistic Population Simulator</h1>
+            <p class="subtitle">Observe how populations grow exponentially before stabilizing at the environment's Carrying Capacity (K).</p>
+        </header>
+
+        <main class="dashboard">
+            <!-- Left Side: Controls & Live Stats -->
+            <section class="control-panel glass">
+                <h2>Simulator Parameters</h2>
+                
+                <div class="input-grid">
+                    <div class="input-group">
+                        <label for="initialPop">Initial Population (P₀)</label>
+                        <input type="number" id="initialPop" value="10" min="1" max="1000">
+                    </div>
+                    <div class="input-group">
+                        <label for="growthRate">Growth Rate (r)</label>
+                        <input type="number" id="growthRate" value="0.1" step="0.01" min="0.01" max="1">
+                    </div>
+                    <div class="input-group">
+                        <label for="carryingCapacity">Carrying Capacity (K)</label>
+                        <input type="number" id="carryingCapacity" value="500" min="50" max="2000">
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button id="btnStart" class="btn btn-primary">
+                        <svg class="icon" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Run Simulation
+                    </button>
+                    <button id="btnInstant" class="btn btn-secondary">Run Instantly</button>
+                    <button id="btnReset" class="btn btn-danger" disabled>Reset</button>
+                </div>
+
+                <div class="stats-panel">
+                    <h3>Environment Metrics</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <span class="stat-label">Generation (t)</span>
+                            <span class="stat-val" id="valTime">0</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">Population Size (P)</span>
+                            <span class="stat-val highlight-pop" id="valPopulation">0</span>
+                        </div>
+                        <div class="stat-card">
+                            <span class="stat-label">Capacity Utilization</span>
+                            <span class="stat-val highlight-cap" id="valUtil">0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="speed-control">
+                    <label for="speedSlider">Simulation Speed</label>
+                    <input type="range" id="speedSlider" min="20" max="300" value="80">
+                    <span id="speedVal">80ms / generation</span>
+                </div>
+            </section>
+
+            <!-- Right Side: Visualization -->
+            <section class="visualizer glass">
+                <div class="chart-header">
+                    <h2>Growth Curve & Habitat</h2>
+                    <span class="badge" id="simStatus">Idle</span>
+                </div>
+                
+                <div class="visualization-layout">
+                    <!-- Habitat Canvas representing visual blobs -->
+                    <div class="habitat-box">
+                        <h3>Habitat (Visual Population)</h3>
+                        <canvas id="habitatCanvas"></canvas>
+                    </div>
+
+                    <!-- Line Chart -->
+                    <div class="chart-container">
+                        <canvas id="populationChart"></canvas>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
