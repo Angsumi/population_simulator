@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     const ctxCanvas = canvas.getContext('2d');
 
-    // Chart Setup
+    // Chart Setup (Population Chart)
     const canvasChart = document.getElementById('populationChart');
     if (!canvasChart) {
         console.error("Canvas element 'populationChart' not found!");
@@ -29,6 +29,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     const ctxChart = canvasChart.getContext('2d');
     let populationChart = null;
+
+    // Chart Setup (Rates Chart)
+    const canvasRatesChart = document.getElementById('ratesChart');
+    if (!canvasRatesChart) {
+        console.error("Canvas element 'ratesChart' not found!");
+        return;
+    }
+    const ctxRatesChart = canvasRatesChart.getContext('2d');
+    let ratesChart = null;
 
     // Setup Canvas size
     function resizeCanvas() {
@@ -50,6 +59,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let historyPopData = [];
     let historyCapData = [];
     let historyGrowthRateData = [];
+    let historyBirthRateData = [];
+    let historyDeathRateData = [];
 
     // Particle logic for Visual Habitat
     class Organism {
@@ -133,8 +144,9 @@ document.addEventListener('DOMContentLoaded', () => {
     animate();
 
     // Initialize the Chart
-    function initChart(carryingCapacity) {
+    function initChart(carryingCapacity, initialGrowthRate) {
         if (typeof Chart !== 'undefined') {
+            // Main Population Chart
             if (populationChart) {
                 populationChart.destroy();
             }
@@ -231,7 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             type: 'linear',
                             display: true,
                             position: 'right',
-                            grid: { drawOnChartArea: false }, // avoid grid line overlaps
+                            grid: { drawOnChartArea: false }, 
                             ticks: { color: '#9ca3af', font: { family: 'Plus Jakarta Sans' } },
                             title: {
                                 display: true,
@@ -243,98 +255,221 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             });
+
+            // Birth and Death Rates Chart
+            if (ratesChart) {
+                ratesChart.destroy();
+            }
+
+            ratesChart = new Chart(ctxRatesChart, {
+                type: 'line',
+                data: {
+                    labels: historyLabels,
+                    datasets: [
+                        {
+                            label: 'Per-Capita Birth Rate (b)',
+                            data: historyBirthRateData,
+                            borderColor: '#3b82f6',
+                            borderWidth: 2.5,
+                            fill: false,
+                            tension: 0.2,
+                            pointRadius: 0,
+                            pointHoverRadius: 5
+                        },
+                        {
+                            label: 'Per-Capita Death Rate (d)',
+                            data: historyDeathRateData,
+                            borderColor: '#f97316',
+                            borderWidth: 2.5,
+                            fill: false,
+                            tension: 0.2,
+                            pointRadius: 0,
+                            pointHoverRadius: 5
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#9ca3af',
+                                font: { family: 'Outfit', size: 12 }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(7, 8, 13, 0.95)',
+                            titleFont: { family: 'Outfit', size: 14 },
+                            bodyFont: { family: 'Plus Jakarta Sans', size: 13 },
+                            borderColor: 'rgba(255, 255, 255, 0.08)',
+                            borderWidth: 1,
+                            padding: 12
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255, 255, 255, 0.04)' },
+                            ticks: { color: '#9ca3af', font: { family: 'Plus Jakarta Sans' } },
+                            title: {
+                                display: true,
+                                text: 'Generations (t)',
+                                color: '#9ca3af',
+                                font: { family: 'Plus Jakarta Sans', size: 12 }
+                            }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            suggestedMin: 0,
+                            suggestedMax: initialGrowthRate * 1.5,
+                            grid: { color: 'rgba(255, 255, 255, 0.04)' },
+                            ticks: { 
+                                color: '#9ca3af', 
+                                font: { family: 'Plus Jakarta Sans' },
+                                callback: function(value) {
+                                    return (value * 100).toFixed(1) + '%';
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Rate per Capita',
+                                color: '#9ca3af',
+                                font: { family: 'Plus Jakarta Sans', size: 12, weight: 'bold' }
+                            }
+                        }
+                    }
+                }
+            });
+
         } else {
             // Fallback drawing when offline (no Chart.js)
-            drawFallbackChart(carryingCapacity);
+            drawFallbackChart(carryingCapacity, initialGrowthRate);
         }
     }
 
-    function drawFallbackChart(carryingCapacity) {
-        // Set internal resolution match parent box size
-        canvasChart.width = canvasChart.parentElement.clientWidth;
-        canvasChart.height = Math.max(280, canvasChart.parentElement.clientHeight || 280);
-
+    function drawFallbackChart(carryingCapacity, initialGrowthRate) {
         const w = canvasChart.width;
         const h = canvasChart.height;
 
-        const ctx = ctxChart;
+        // Reset canvas dimensions to fit their parents
+        canvasChart.width = canvasChart.parentElement.clientWidth;
+        canvasChart.height = Math.max(280, canvasChart.parentElement.clientHeight || 280);
 
-        // Background
-        ctx.fillStyle = '#0b0c15';
-        ctx.fillRect(0, 0, w, h);
+        canvasRatesChart.width = canvasRatesChart.parentElement.clientWidth;
+        canvasRatesChart.height = Math.max(280, canvasRatesChart.parentElement.clientHeight || 280);
 
-        // Labels & Warning
-        ctx.fillStyle = 'rgba(239, 68, 68, 0.8)';
-        ctx.font = '12px Outfit, sans-serif';
-        ctx.fillText('Offline Mode (Chart.js failed to load)', 20, 25);
-
-        // Set graph area bounds
         const padding = 40;
-        const graphW = w - padding * 2;
-        const graphH = h - padding * 2;
+        const graphW = canvasChart.width - padding * 2;
+        const graphH = canvasChart.height - padding * 2;
 
-        // Draw Grid Lines
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
-        ctx.lineWidth = 1;
+        // --- DRAW MAIN POPULATION CHART ---
+        const ctxPop = ctxChart;
+        ctxPop.fillStyle = '#0b0c15';
+        ctxPop.fillRect(0, 0, canvasChart.width, canvasChart.height);
+        ctxPop.fillStyle = 'rgba(239, 68, 68, 0.8)';
+        ctxPop.font = '12px Outfit, sans-serif';
+        ctxPop.fillText('Offline Mode (Chart.js failed to load)', 20, 25);
+
+        // Pop Chart Grid lines
+        ctxPop.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+        ctxPop.lineWidth = 1;
         for (let i = 0; i <= 4; i++) {
             const y = padding + (graphH * i / 4);
-            ctx.beginPath();
-            ctx.moveTo(padding, y);
-            ctx.lineTo(w - padding, y);
-            ctx.stroke();
+            ctxPop.beginPath();
+            ctxPop.moveTo(padding, y);
+            ctxPop.lineTo(canvasChart.width - padding, y);
+            ctxPop.stroke();
         }
 
-        // Determine max values
         const maxVal = Math.max(carryingCapacity * 1.2, ...historyPopData, 100);
         const maxGrowthVal = Math.max(...historyGrowthRateData, 5);
 
-        // Draw Carrying Capacity line (Pink)
+        // Pop Chart Carrying capacity line
         const capY = padding + graphH - ((carryingCapacity / maxVal) * graphH);
-        ctx.strokeStyle = '#ec4899';
-        ctx.lineWidth = 1.5;
-        ctx.setLineDash([5, 5]);
-        ctx.beginPath();
-        ctx.moveTo(padding, capY);
-        ctx.lineTo(w - padding, capY);
-        ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.fillStyle = '#ec4899';
-        ctx.fillText(`Capacity K (${carryingCapacity})`, w - padding - 120, capY - 5);
+        ctxPop.strokeStyle = '#ec4899';
+        ctxPop.lineWidth = 1.5;
+        ctxPop.setLineDash([5, 5]);
+        ctxPop.beginPath();
+        ctxPop.moveTo(padding, capY);
+        ctxPop.lineTo(canvasChart.width - padding, capY);
+        ctxPop.stroke();
+        ctxPop.setLineDash([]);
+        ctxPop.fillStyle = '#ec4899';
+        ctxPop.fillText(`Capacity K (${carryingCapacity})`, canvasChart.width - padding - 120, capY - 5);
 
-        // Draw Population Line (Indigo)
+        // Pop Line
         if (historyPopData.length > 0) {
-            ctx.strokeStyle = '#6366f1';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            
+            ctxPop.strokeStyle = '#6366f1';
+            ctxPop.lineWidth = 3;
+            ctxPop.beginPath();
             for (let i = 0; i < historyPopData.length; i++) {
                 const x = padding + (i / maxGenerations) * graphW;
                 const y = padding + graphH - ((historyPopData[i] / maxVal) * graphH);
-                if (i === 0) {
-                    ctx.moveTo(x, y);
-                } else {
-                    ctx.lineTo(x, y);
-                }
+                if (i === 0) ctxPop.moveTo(x, y);
+                else ctxPop.lineTo(x, y);
             }
-            ctx.stroke();
+            ctxPop.stroke();
         }
 
-        // Draw Growth Rate Line (Green)
+        // Growth Line
         if (historyGrowthRateData.length > 0) {
-            ctx.strokeStyle = '#10b981';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            
+            ctxPop.strokeStyle = '#10b981';
+            ctxPop.lineWidth = 2;
+            ctxPop.beginPath();
             for (let i = 0; i < historyGrowthRateData.length; i++) {
                 const x = padding + (i / maxGenerations) * graphW;
                 const y = padding + graphH - ((historyGrowthRateData[i] / maxGrowthVal) * graphH);
-                if (i === 0) {
-                    ctx.moveTo(x, y);
-                } else {
-                    ctx.lineTo(x, y);
-                }
+                if (i === 0) ctxPop.moveTo(x, y);
+                else ctxPop.lineTo(x, y);
             }
-            ctx.stroke();
+            ctxPop.stroke();
+        }
+
+        // --- DRAW RATES CHART ---
+        const ctxRate = ctxRatesChart;
+        ctxRate.fillStyle = '#0b0c15';
+        ctxRate.fillRect(0, 0, canvasRatesChart.width, canvasRatesChart.height);
+
+        // Grid lines for rates chart
+        ctxRate.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+        ctxRate.lineWidth = 1;
+        for (let i = 0; i <= 4; i++) {
+            const y = padding + (graphH * i / 4);
+            ctxRate.beginPath();
+            ctxRate.moveTo(padding, y);
+            ctxRate.lineTo(canvasRatesChart.width - padding, y);
+            ctxRate.stroke();
+        }
+
+        const maxRateVal = Math.max(initialGrowthRate * 1.5, ...historyDeathRateData, 0.1);
+
+        // Birth Rate (Blue)
+        if (historyBirthRateData.length > 0) {
+            ctxRate.strokeStyle = '#3b82f6';
+            ctxRate.lineWidth = 2.5;
+            ctxRate.beginPath();
+            for (let i = 0; i < historyBirthRateData.length; i++) {
+                const x = padding + (i / maxGenerations) * graphW;
+                const y = padding + graphH - ((historyBirthRateData[i] / maxRateVal) * graphH);
+                if (i === 0) ctxRate.moveTo(x, y);
+                else ctxRate.lineTo(x, y);
+            }
+            ctxRate.stroke();
+        }
+
+        // Death Rate (Orange)
+        if (historyDeathRateData.length > 0) {
+            ctxRate.strokeStyle = '#f97316';
+            ctxRate.lineWidth = 2.5;
+            ctxRate.beginPath();
+            for (let i = 0; i < historyDeathRateData.length; i++) {
+                const x = padding + (i / maxGenerations) * graphW;
+                const y = padding + graphH - ((historyDeathRateData[i] / maxRateVal) * graphH);
+                if (i === 0) ctxRate.moveTo(x, y);
+                else ctxRate.lineTo(x, y);
+            }
+            ctxRate.stroke();
         }
     }
 
@@ -360,11 +495,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const p0 = parseFloat(inputInitialPop.value) || 10;
         const k = parseFloat(inputCarryingCapacity.value) || 500;
+        const r = parseFloat(inputGrowthRate.value) || 0.1;
 
         currentPopulation = p0;
         currentGeneration = 0;
 
-        initChart(k);
+        initChart(k, r);
         runGenerationStep();
     }
 
@@ -377,8 +513,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const r = parseFloat(inputGrowthRate.value) || 0.1;
         const k = parseFloat(inputCarryingCapacity.value) || 500;
 
-        // Calculate growth rate ΔP = r * P * (1 - P/K)
-        const growthRateVal = r * currentPopulation * (1 - (currentPopulation / k));
+        // Birth and death rate calculation
+        const perCapitaBirth = r;
+        const perCapitaDeath = r * (currentPopulation / k);
+        const growthRateVal = (perCapitaBirth * currentPopulation) - (perCapitaDeath * currentPopulation);
         const nextPop = currentPopulation + growthRateVal;
         currentPopulation = Math.max(0, nextPop);
 
@@ -387,6 +525,8 @@ document.addEventListener('DOMContentLoaded', () => {
         historyPopData.push(Math.round(currentPopulation));
         historyCapData.push(k);
         historyGrowthRateData.push(Math.round(growthRateVal * 100) / 100);
+        historyBirthRateData.push(Math.round(perCapitaBirth * 1000) / 1000);
+        historyDeathRateData.push(Math.round(perCapitaDeath * 1000) / 1000);
 
         // Update UI Stats
         valTime.textContent = currentGeneration;
@@ -397,11 +537,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Render Canvas Blobs
         updateOrganisms(currentPopulation);
 
-        // Update Chart
-        if (typeof Chart !== 'undefined' && populationChart) {
-            populationChart.update('none');
+        // Update Charts
+        if (typeof Chart !== 'undefined') {
+            if (populationChart) populationChart.update('none');
+            if (ratesChart) ratesChart.update('none');
         } else {
-            drawFallbackChart(k);
+            drawFallbackChart(k, r);
         }
 
         currentGeneration++;
@@ -431,8 +572,13 @@ document.addEventListener('DOMContentLoaded', () => {
             historyPopData.push(Math.round(currentPopulation));
             historyCapData.push(k);
 
-            const growthRateVal = r * currentPopulation * (1 - (currentPopulation / k));
+            const perCapitaBirth = r;
+            const perCapitaDeath = r * (currentPopulation / k);
+            const growthRateVal = (perCapitaBirth * currentPopulation) - (perCapitaDeath * currentPopulation);
+            
             historyGrowthRateData.push(Math.round(growthRateVal * 100) / 100);
+            historyBirthRateData.push(Math.round(perCapitaBirth * 1000) / 1000);
+            historyDeathRateData.push(Math.round(perCapitaDeath * 1000) / 1000);
 
             const nextPop = currentPopulation + growthRateVal;
             currentPopulation = Math.max(0, nextPop);
@@ -444,12 +590,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const capacityPct = Math.min(100, Math.round((historyPopData[maxGenerations] / k) * 100));
         valUtil.textContent = `${capacityPct}%`;
 
-        initChart(k);
+        initChart(k, r);
         updateOrganisms(historyPopData[maxGenerations]);
-        if (typeof Chart !== 'undefined' && populationChart) {
-            populationChart.update();
+        if (typeof Chart !== 'undefined') {
+            if (populationChart) populationChart.update();
+            if (ratesChart) ratesChart.update();
         } else {
-            drawFallbackChart(k);
+            drawFallbackChart(k, r);
         }
         completeSimulation();
     }
@@ -469,6 +616,8 @@ document.addEventListener('DOMContentLoaded', () => {
         historyPopData = [];
         historyCapData = [];
         historyGrowthRateData = [];
+        historyBirthRateData = [];
+        historyDeathRateData = [];
 
         inputInitialPop.disabled = false;
         inputGrowthRate.disabled = false;
@@ -487,7 +636,8 @@ document.addEventListener('DOMContentLoaded', () => {
         organisms = [];
         
         const k = parseFloat(inputCarryingCapacity.value) || 500;
-        initChart(k);
+        const r = parseFloat(inputGrowthRate.value) || 0.1;
+        initChart(k, r);
     }
 
     // Attach Event Listeners
