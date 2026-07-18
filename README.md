@@ -19,6 +19,7 @@ The project is structured into four levels:
 *   **[Level5.2](file:///home/angsuman/extra_spac/population_simulator/Level5.2/)** ([Live Demo](https://angsumi.github.io/population_simulator/Level5.2/)): The balanced 3-trophic model. Perfects food preservation by adding herbivore satiation limit ($E > 125$) and moving the safe zone brush to the bottom-center, leaving predator crossing paths unobstructed.
 *   **[Level5.3](file:///home/angsuman/extra_spac/population_simulator/Level5.3/)** ([Live Demo](https://angsumi.github.io/population_simulator/Level5.3/)): The dynamic energy cap model. Ties maximum energy limits and satiation limits dynamically to the user's custom birth split thresholds, resolving parameter bottlenecks.
 *   **[Level5.4](file:///home/angsuman/extra_spac/population_simulator/Level5.4/)** ([Live Demo](https://angsumi.github.io/population_simulator/Level5.4/)): The spatial hunt equilibrium model. Resolves persistent prey extinctions by introducing active herbivore fleeing vectors ($75\text{px}$ sensory radius) and lowering predator food intake gains to stabilize population cycles.
+*   **[Level5.5](file:///home/angsuman/extra_spac/population_simulator/Level5.5/)** ([Live Demo](https://angsumi.github.io/population_simulator/Level5.5/)): The territorial predator model. Solves over-predation crashes by implementing predator territorial checks (crowding $> 2$ within $120\text{px}$ doubles metabolic cost and blocks birth splitting), ensuring long-term multi-trophic stability.
 
 ---
 
