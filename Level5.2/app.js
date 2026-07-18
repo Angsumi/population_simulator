@@ -379,8 +379,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 continue;
             }
 
-            // Check for birth by splitting (energy threshold = 180 for Herbivore, 220 for Predator)
-            const splitThreshold = org.type === 'predator' ? 220 : 180;
+            // Check for birth by splitting (Lower thresholds to boost reproduction in Level 5.2)
+            const splitThreshold = org.type === 'predator' ? 160 : 135;
             if (org.energy >= splitThreshold) {
                 births++;
                 org.energy = Math.round(org.energy / 2); // Split energy
