@@ -10,6 +10,8 @@ The project is structured into four levels:
 *   **[Level1.1](file:///home/angsuman/extra_spac/population_simulator/Level1.1/)**: The formula-driven simulator (Level 1) updated to support interactive cursor kills. Clicking organisms on the habitat canvas kills them, decrements the population, and draws a visual death animation.
 *   **[Level2](file:///home/angsuman/extra_spac/population_simulator/Level2/)**: An agent-based stochastic simulation. Individuals are autonomous agents with independent updates. Performs exact per-capita stochastic calculations for small populations ($P \le 500$) and binomial approximations for larger populations.
 *   **[Level2.1](file:///home/angsuman/extra_spac/population_simulator/Level2.1/)**: The agent-based simulator (Level 2) updated to support interactive cursor kills with dynamic coordinate scaling and a visual death feedback animation.
+*   **[Level3](file:///home/angsuman/extra_spac/population_simulator/Level3/)**: An emergent carrying capacity model utilizing spatial competition. Individual death probability increases locally based on the number of neighbors within their sensory radius ($R$), yielding an emergent carrying capacity $K$ without a global variable.
+*   **[Level3.1](file:///home/angsuman/extra_spac/population_simulator/Level3.1/)**: An emergent carrying capacity model based on resource dynamics. Organisms wander, consume green food dots to gain energy, burn energy to survive, and split when fed. Carrying capacity emerges naturally from food regeneration rates and starvation.
 
 ---
 
