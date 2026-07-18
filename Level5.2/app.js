@@ -1045,9 +1045,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Calculate theoretical emergent carrying capacity (average across seasonal cycles for Herbivores)
     function getEmergentK() {
-        const spawnRate = parseFloat(inputFoodSpawnRate.value) || 40;
+        const spawnRate = parseFloat(inputFoodSpawnRate.value) || 60;
         const nutritiveValue = 45; // Fixed energy value
-        const survivalCost = parseFloat(inputSurvivalCost.value) || 8;
+        const survivalCost = parseFloat(inputSurvivalCost.value) || 5;
         if (survivalCost <= 0) return 1;
         return Math.max(1, Math.round((spawnRate * nutritiveValue) / survivalCost));
     }
@@ -1073,8 +1073,8 @@ document.addEventListener('DOMContentLoaded', () => {
         simStatus.textContent = 'Running';
         simStatus.className = 'badge running';
 
-        const h0 = Math.max(1, Math.round(parseFloat(inputInitialPop.value) || 80));
-        const pred0 = Math.max(0, Math.round(parseFloat(inputInitialPred.value) || 15));
+        const h0 = Math.max(1, Math.round(parseFloat(inputInitialPop.value) || 150));
+        const pred0 = Math.max(0, Math.round(parseFloat(inputInitialPred.value) || 8));
         
         currentGeneration = 0;
         spawnInitialPopulation(h0, pred0);
@@ -1091,10 +1091,10 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const foodSpawnRate = parseFloat(inputFoodSpawnRate.value) || 40;
-        const seasonLength = parseFloat(inputSeasonLength.value) || 60;
-        const survivalCost = parseFloat(inputSurvivalCost.value) || 8;
-        const predatorCost = parseFloat(inputPredatorSurvivalCost.value) || 16;
+        const foodSpawnRate = parseFloat(inputFoodSpawnRate.value) || 60;
+        const seasonLength = parseFloat(inputSeasonLength.value) || 80;
+        const survivalCost = parseFloat(inputSurvivalCost.value) || 5;
+        const predatorCost = parseFloat(inputPredatorSurvivalCost.value) || 15;
         const kEmergent = getEmergentK();
 
         // Record state BEFORE the generation step
@@ -1179,12 +1179,12 @@ document.addEventListener('DOMContentLoaded', () => {
         btnInstant.disabled = true;
         btnReset.disabled = false;
 
-        const h0 = Math.max(1, Math.round(parseFloat(inputInitialPop.value) || 80));
-        const pred0 = Math.max(0, Math.round(parseFloat(inputInitialPred.value) || 15));
-        const foodSpawnRate = parseFloat(inputFoodSpawnRate.value) || 40;
-        const seasonLength = parseFloat(inputSeasonLength.value) || 60;
-        const survivalCost = parseFloat(inputSurvivalCost.value) || 8;
-        const predatorCost = parseFloat(inputPredatorSurvivalCost.value) || 16;
+        const h0 = Math.max(1, Math.round(parseFloat(inputInitialPop.value) || 150));
+        const pred0 = Math.max(0, Math.round(parseFloat(inputInitialPred.value) || 8));
+        const foodSpawnRate = parseFloat(inputFoodSpawnRate.value) || 60;
+        const seasonLength = parseFloat(inputSeasonLength.value) || 80;
+        const survivalCost = parseFloat(inputSurvivalCost.value) || 5;
+        const predatorCost = parseFloat(inputPredatorSurvivalCost.value) || 15;
         const kEmergent = getEmergentK();
 
         spawnInitialPopulation(h0, pred0);
