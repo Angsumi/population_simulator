@@ -17,6 +17,7 @@ The project is structured into four levels:
 *   **[Level5](file:///home/angsuman/extra_spac/population_simulator/Level5/)** ([Live Demo](https://angsumi.github.io/population_simulator/Level5/)): A 3-trophic level ecosystem model (Producer = Green, Herbivore = Blue, Predator = Red) with seasonal variations. Herbivores hunt grass, and Predators chase and devour Herbivores, all reproducing asexually.
 *   **[Level5.1](file:///home/angsuman/extra_spac/population_simulator/Level5.1/)** ([Live Demo](https://angsumi.github.io/population_simulator/Level5.1/)): The stabilized 3-trophic ecosystem model. Prevents predator-prey collapses by introducing a central Camouflage Forest refuge for prey and a predator satiation cooldown.
 *   **[Level5.2](file:///home/angsuman/extra_spac/population_simulator/Level5.2/)** ([Live Demo](https://angsumi.github.io/population_simulator/Level5.2/)): The balanced 3-trophic model. Perfects food preservation by adding herbivore satiation limit ($E > 125$) and moving the safe zone brush to the bottom-center, leaving predator crossing paths unobstructed.
+*   **[Level5.3](file:///home/angsuman/extra_spac/population_simulator/Level5.3/)** ([Live Demo](https://angsumi.github.io/population_simulator/Level5.3/)): The dynamic energy cap model. Ties maximum energy limits and satiation limits dynamically to the user's custom birth split thresholds, resolving parameter bottlenecks.
 
 ---
 
