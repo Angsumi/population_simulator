@@ -13,6 +13,7 @@ The project is structured into four levels:
 *   **[Level3](file:///home/angsuman/extra_spac/population_simulator/Level3/)**: An emergent carrying capacity model utilizing spatial competition. Individual death probability increases locally based on the number of neighbors within their sensory radius ($R$), yielding an emergent carrying capacity $K$ without a global variable.
 *   **[Level3.1](file:///home/angsuman/extra_spac/population_simulator/Level3.1/)**: An emergent carrying capacity model based on resource dynamics. Organisms wander, consume green food dots to gain energy, burn energy to survive, and split when fed. Carrying capacity emerges naturally from food regeneration rates and starvation.
 *   **[Level3.1.1](file:///home/angsuman/extra_spac/population_simulator/Level3.1.1/)**: The upgraded resource dynamics model resolving starvation issues by introducing substep micro-movements/feeding iterations and faster wandering kinetics.
+*   **[Level4](file:///home/angsuman/extra_spac/population_simulator/Level4/)**: The seasonal foraging simulation. Incorporates seasonal resource fluctuations (sine-modulated birth rates of grass), local seed dispersal (logistic growth of food), and smart foraging steering (organisms steer towards the nearest food dot within their sensory range).
 
 ---
 
