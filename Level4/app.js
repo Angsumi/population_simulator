@@ -152,13 +152,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         draw() {
-            // Color based on energy: 0 (Starving/Red) to 150 (Healthy/Green)
-            const healthRatio = Math.max(0, Math.min(1, this.energy / 150));
-            
-            // Interpolate Red (239, 60, 60) to Green (16, 220, 96)
-            const r = Math.round(239 + (16 - 239) * healthRatio);
-            const g = Math.round(60 + (220 - 60) * healthRatio);
-            const b = Math.round(60 + (96 - 60) * healthRatio);
+            // solid red color only (no colour change)
+            const r = 239, g = 60, b = 60;
 
             ctxCanvas.beginPath();
             ctxCanvas.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
