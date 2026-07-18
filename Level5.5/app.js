@@ -330,7 +330,69 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Removed SUBSTEPS physics/collision block from simulateGeneration to prevent double-updating with the draw loop.
+        // To make movement and eating continuous, we simulate 10 substeps of movement and feeding per generation tick.
+        const SUBSTEPS = 10;
+        for (let step = 0; step < SUBSTEPS; step++) {
+            // Update all positions first
+            for (let i = 0; i < individuals.length; i++) {
+                if (individuals[i].alive) {
+                    individuals[i].update();
+                }
+            }
+
+            // Herbivores eat grass
+            for (let i = 0; i < individuals.length; i++) {
+                const org = individuals[i];
+                if (org.alive && org.type === 'herbivore') {
+                    const isSatiated = org.energy > (herbSplitVal * 0.9);
+                    if (isSatiated) continue;
+
+                    const eatRadius = org.radius + 8;
+                    for (let j = foodItems.length - 1; j >= 0; j--) {
+                        const food = foodItems[j];
+                        const dx = org.x - food.x;
+                        const dy = org.y - food.y;
+                        const distSq = dx * dx + dy * dy;
+                        if (distSq < eatRadius * eatRadius) {
+                            org.energy = Math.min(herbEnergyCap, org.energy + nutritiveValue);
+                            foodItems.splice(j, 1);
+                            break; // eat one food item per substep
+                        }
+                    }
+                }
+            }
+
+            // Predators eat herbivores
+            for (let i = 0; i < individuals.length; i++) {
+                const pred = individuals[i];
+                const isSatiated = pred.energy > (predSplitVal * 0.85);
+                if (pred.alive && pred.type === 'predator' && pred.huntCooldown <= 0 && !isSatiated) {
+                    const eatRadius = pred.radius + 8;
+                    for (let j = 0; j < individuals.length; j++) {
+                        const prey = individuals[j];
+                        if (prey.alive && prey.type === 'herbivore') {
+                            const dx = pred.x - prey.x;
+                            const dy = pred.y - prey.y;
+                            const distSq = dx * dx + dy * dy;
+                            if (distSq < eatRadius * eatRadius) {
+                                prey.alive = false;
+                                prey.energy = 0;
+                                pred.energy = Math.min(predEnergyCap, pred.energy + predatorNutritiveValue);
+                                pred.huntCooldown = 2; // Cooldown for 2 generations (prevents vacuuming)
+                                
+                                deathEffects.push({
+                                    x: prey.x,
+                                    y: prey.y,
+                                    radius: 4,
+                                    alpha: 0.6
+                                });
+                                break; // eat one prey item per substep
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         // 2. Individuals consume energy, check for starvation, and split
         let births = 0;
@@ -349,6 +411,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             org.age++;
+            if (org.huntCooldown > 0) org.huntCooldown--;
             
             let cost = org.type === 'predator' ? predatorCost : herbivoreCost;
             let isStressedPredator = false;
@@ -473,60 +536,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const herbEnergyCap = herbSplitVal + nutritiveValue * 2;
         const predEnergyCap = predSplitVal + predatorNutritiveValue * 2;
 
-        // Herbivores graze grass
-        for (const org of individuals) {
-            if (org.alive && org.type === 'herbivore') {
-                const isSatiated = org.energy > (herbSplitVal * 0.9);
-                if (isSatiated) continue;
-
-                const eatRadius = org.radius + 8;
-                for (let j = foodItems.length - 1; j >= 0; j--) {
-                    const food = foodItems[j];
-                    const dx = org.x - food.x;
-                    const dy = org.y - food.y;
-                    const distSq = dx * dx + dy * dy;
-                    if (distSq < eatRadius * eatRadius) {
-                        org.energy = Math.min(herbEnergyCap, org.energy + nutritiveValue);
-                        foodItems.splice(j, 1);
-                        break;
-                    }
-                }
-            }
-        }
-
-        // Predators hunt herbivores
-        for (const pred of individuals) {
-            if (pred.alive && pred.type === 'predator') {
-                if (pred.huntCooldown > 0) pred.huntCooldown--;
-                
-                const isSatiated = pred.energy > (predSplitVal * 0.85);
-                if (pred.huntCooldown <= 0 && !isSatiated) {
-                    const eatRadius = pred.radius + 8;
-                    for (const prey of individuals) {
-                        if (prey.alive && prey.type === 'herbivore') {
-                            const dx = pred.x - prey.x;
-                            const dy = pred.y - prey.y;
-                            const distSq = dx * dx + dy * dy;
-                            if (distSq < eatRadius * eatRadius) {
-                                prey.alive = false;
-                                prey.energy = 0;
-                                pred.energy = Math.min(predEnergyCap, pred.energy + predatorNutritiveValue);
-                                pred.huntCooldown = 40; // Attack cooldown (Type II functional response)
-                                
-                                // Visual death effect
-                                deathEffects.push({
-                                    x: prey.x,
-                                    y: prey.y,
-                                    radius: 4,
-                                    alpha: 0.6
-                                });
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        // Physics (eating and collisions) are handled exclusively in simulateGeneration() 
+        // via SUBSTEPS to ensure deterministic physics that scale correctly with fast-forwarding.
 
         // Update and draw each organism
         for (const org of individuals) {
