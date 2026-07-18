@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const inputSeasonLength = document.getElementById('seasonLength');
     const inputSurvivalCost = document.getElementById('survivalCost');
     const inputPredatorSurvivalCost = document.getElementById('predatorSurvivalCost');
+    const inputHerbivoreSplitThreshold = document.getElementById('herbivoreSplitThreshold');
+    const inputPredatorSplitThreshold = document.getElementById('predatorSplitThreshold');
     const inputMaxGenerations = document.getElementById('maxGenerations');
     const btnStart = document.getElementById('btnStart');
     const btnInstant = document.getElementById('btnInstant');
@@ -379,8 +381,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 continue;
             }
 
-            // Check for birth by splitting (Lower thresholds to boost reproduction in Level 5.2)
-            const splitThreshold = org.type === 'predator' ? 160 : 135;
+            // Check for birth by splitting (User-configurable thresholds in Level 5.2)
+            const herbSplitVal = parseFloat(inputHerbivoreSplitThreshold.value) || 135;
+            const predSplitVal = parseFloat(inputPredatorSplitThreshold.value) || 160;
+            const splitThreshold = org.type === 'predator' ? predSplitVal : herbSplitVal;
             if (org.energy >= splitThreshold) {
                 births++;
                 org.energy = Math.round(org.energy / 2); // Split energy
@@ -1065,6 +1069,8 @@ document.addEventListener('DOMContentLoaded', () => {
         inputSeasonLength.disabled = true;
         inputSurvivalCost.disabled = true;
         inputPredatorSurvivalCost.disabled = true;
+        inputHerbivoreSplitThreshold.disabled = true;
+        inputPredatorSplitThreshold.disabled = true;
         inputMaxGenerations.disabled = true;
         btnStart.disabled = true;
         btnInstant.disabled = true;
@@ -1174,6 +1180,8 @@ document.addEventListener('DOMContentLoaded', () => {
         inputSeasonLength.disabled = true;
         inputSurvivalCost.disabled = true;
         inputPredatorSurvivalCost.disabled = true;
+        inputHerbivoreSplitThreshold.disabled = true;
+        inputPredatorSplitThreshold.disabled = true;
         inputMaxGenerations.disabled = true;
         btnStart.disabled = true;
         btnInstant.disabled = true;
@@ -1276,6 +1284,8 @@ document.addEventListener('DOMContentLoaded', () => {
         inputSeasonLength.disabled = false;
         inputSurvivalCost.disabled = false;
         inputPredatorSurvivalCost.disabled = false;
+        inputHerbivoreSplitThreshold.disabled = false;
+        inputPredatorSplitThreshold.disabled = false;
         inputMaxGenerations.disabled = false;
         btnStart.disabled = false;
         btnInstant.disabled = false;
