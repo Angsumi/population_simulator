@@ -14,7 +14,8 @@
     "Directory layout protocols partitioning core models (Level1/Level2) and updated interactive versions (Level1.1/Level2.1)",
     "Interactive cursor-killing with dynamic canvas scaling and death animation effects",
     "Level3 Spatial Competition Model where Carrying Capacity (K) emerges from local neighborhood density and sensory radius",
-    "Level3.1 Resource Dynamics Model where Carrying Capacity (K) emerges from food regeneration rates and starvation dynamics"
+    "Level3.1 Resource Dynamics Model where Carrying Capacity (K) emerges from food regeneration rates and starvation dynamics",
+    "Level3.1.1 Resource Dynamics Pro Model resolving starvation and movement constraints with real-time frame feeding checks and active wandering kinetics"
   ],
   "instructions_for_future_agents": "When working in this repository, always read this context file and the root README.md first. Follow the directory protocol: keep Level1 & Level2 pristine; add interactive/extended features to Level1.1 & Level2.1; explore emergent ecological systems under Level3 (Spatial Density Competition) and Level3.1 (Prey-Resource dynamics). Make sure git operations use the configured GitHub repository. To push updates, use: git add . && git commit -m '<message>' && git push origin main"
 }
