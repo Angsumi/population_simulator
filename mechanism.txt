@@ -21,3 +21,13 @@ This document explains the biological rules driving the most up-to-date simulati
 --- 4. Visualizer Engine ---
 - Decoupled Rendering: The simulation calculations run independently in a bare Python script. A background HTTP thread serializes the coordinate data to a live HTML5 Canvas frontend.
 - Chronology: 1 Tick = 1 Day. The real-time line graph perfectly visualizes the Lotka-Volterra curves across 33 "Years" without ever interfering with the core biological speeds.
+
+--- 5. Age-Structured Life Cycles (Level 8.2.3) ---
+- Juveniles: Do not eat, hunt, or reproduce. Immune to starvation.
+- Mature: The only phase capable of reproduction.
+- Adults (Old): Continue to eat and hunt, but can no longer reproduce.
+
+--- 6. Time & Starvation Realignment (Level 9 & 9.1) ---
+- Time Scale: 1 Tick = 1 Day.
+- Eating-Independent Breeding: Animals reproduce purely based on time (Deer drop 2 fawns annually, Lions drop 1 cub every 2 years) provided they survive to that age.
+- Starvation Pressure: Animals must find food within 300 days or die. Because breeding is time-gated, they must consistently forage/hunt to survive until their breeding season.

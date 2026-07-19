@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Real-time Ecosystem Visualizer</title>
+    <style>
+        body { margin: 0; padding: 20px 0; background-color: #222; color: #fff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; gap: 20px;}
+        canvas { background-color: #1a1a1a; box-shadow: 0 0 10px rgba(0,0,0,0.5); border-radius: 8px; }
+        #info { font-size: 20px; font-weight: bold; }
+        .legend { display: flex; gap: 20px; font-size: 16px; margin-top: -10px; }
+        .l-grass { color: #10B981; }
+        .l-deer { color: #3B82F6; }
+        .l-lion { color: #F59E0B; }
+    </style>
+</head>
+<body>
+    <div id="info">Waiting for simulation data...</div>
+    <div class="legend">
+        <span class="l-grass">● Grass</span>
+        <span class="l-deer">● Deer</span>
+        <span class="l-lion">● Lions</span>
+    </div>
+    <canvas id="simCanvas" width="1200" height="440"></canvas>
+    <div style="display: flex; gap: 20px;">
+        <canvas id="graphCanvas" width="800" height="200"></canvas>
+        <canvas id="pyramidCanvas" width="380" height="200"></canvas>
+    </div>
+    
+    <script>
+        const simCanvas = document.getElementById('simCanvas');
+        const simCtx = simCanvas.getContext('2d');
+        
+        const graphCanvas = document.getElementById('graphCanvas');
+        const graphCtx = graphCanvas.getContext('2d');
+        
+        const pyramidCanvas = document.getElementById('pyramidCanvas');
+        const pyramidCtx = pyramidCanvas.getContext('2d');
+        
+        const info = document.getElementById('info');
+
+        function drawGraph(history) {
+            graphCtx.clearRect(0, 0, graphCanvas.width, graphCanvas.height);
+            if (!history || history.day.length === 0) return;
+
+            const days = history.day;
+            const grass = history.grass;
+            const deer = history.deer;
+            const lions = history.lions;
+
+            const maxVal = Math.max(...grass, ...deer, ...lions, 10);
+
+            const padding = 15;
+            const drawW = graphCanvas.width - 2 * padding;
+            const drawH = graphCanvas.height - 2 * padding;
+
+            function plotLine(data, color) {
+                graphCtx.beginPath();
+                graphCtx.strokeStyle = color;
+                graphCtx.lineWidth = 2;
+                for (let i = 0; i < data.length; i++) {
+                    const x = padding + (i / Math.max(1, days.length - 1)) * drawW;
+                    const y = graphCanvas.height - padding - (data[i] / maxVal) * drawH;
+                    if (i === 0) graphCtx.moveTo(x, y);
+                    else graphCtx.lineTo(x, y);
+                }
+                graphCtx.stroke();
+            }
+
+            // Draw axis line
+            graphCtx.strokeStyle = '#555';
+            graphCtx.lineWidth = 1;
+            graphCtx.beginPath();
+            graphCtx.moveTo(padding, graphCanvas.height - padding);
+            graphCtx.lineTo(graphCanvas.width - padding, graphCanvas.height - padding);
+            graphCtx.stroke();
+
+            plotLine(grass, '#10B981');
+            plotLine(deer, '#3B82F6');
+            plotLine(lions, '#F59E0B');
+        }
+
+        function drawPyramids(stats) {
+            pyramidCtx.clearRect(0, 0, pyramidCanvas.width, pyramidCanvas.height);
+            if (!stats) return;
+            
+            let dJuv = stats.deer_juv, dMat = stats.deer_mat, dAdu = stats.deer_adu;
+            let lJuv = stats.lion_juv, lMat = stats.lion_mat, lAdu = stats.lion_adu;
+            
+            const labels = ["Adult", "Mature", "Juv."];
+            const maxVal = Math.max(dJuv, dMat, dAdu, lJuv, lMat, lAdu, 1);
+            
+            const w = pyramidCanvas.width;
+            const h = pyramidCanvas.height;
+            const mid = w / 2;
+            const barH = 30;
+            const gap = 15;
+            const startY = (h - (3 * barH + 2 * gap)) / 2 + 10;
+            
+            pyramidCtx.font = "14px sans-serif";
+            pyramidCtx.fillStyle = "#fff";
+            pyramidCtx.textAlign = "center";
+            pyramidCtx.fillText("Deer Age | Lion Age", mid, 20);
+            
+            for(let i=0; i<3; i++) {
+                const y = startY + i*(barH + gap);
+                let dCount, lCount;
+                if(i===0) { dCount = dAdu; lCount = lAdu; }
+                else if(i===1) { dCount = dMat; lCount = lMat; }
+                else { dCount = dJuv; lCount = lJuv; }
+                
+                // Deer (left)
+                const dBarW = (dCount / maxVal) * (mid - 40);
+                pyramidCtx.fillStyle = "#3B82F6";
+                pyramidCtx.fillRect(mid - 30 - dBarW, y, dBarW, barH);
+                
+                // Lion (right)
+                const lBarW = (lCount / maxVal) * (mid - 40);
+                pyramidCtx.fillStyle = "#F59E0B";
+                pyramidCtx.fillRect(mid + 30, y, lBarW, barH);
+                
+                // Labels
+                pyramidCtx.fillStyle = "#ccc";
+                pyramidCtx.textAlign = "center";
+                pyramidCtx.fillText(labels[i], mid, y + barH/2 + 5);
+                
+                // Counts
+                pyramidCtx.textAlign = "right";
+                pyramidCtx.fillText(dCount, mid - 35 - dBarW, y + barH/2 + 5);
+                pyramidCtx.textAlign = "left";
+                pyramidCtx.fillText(lCount, mid + 35 + lBarW, y + barH/2 + 5);
+            }
+        }
+
+        async function fetchState() {
+            try {
+                const response = await fetch('/state');
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Clear canvas
+                    simCtx.clearRect(0, 0, simCanvas.width, simCanvas.height);
+                    
+                    if (data.hiding_spots) {
+                        // Draw Hiding Spots
+                        simCtx.fillStyle = 'rgba(34, 139, 34, 0.3)';
+                        for (const spot of data.hiding_spots) {
+                            simCtx.beginPath();
+                            simCtx.arc(spot.x, spot.y, spot.radius, 0, Math.PI * 2);
+                            simCtx.fill();
+                        }
+
+                        // Draw Grass
+                        simCtx.fillStyle = '#10B981';
+                        for (const g of data.grass) {
+                            simCtx.beginPath();
+                            simCtx.arc(g.x, g.y, 2, 0, Math.PI * 2);
+                            simCtx.fill();
+                        }
+
+                        // Draw Deer
+                        simCtx.fillStyle = '#3B82F6';
+                        for (const d of data.deer) {
+                            simCtx.beginPath();
+                            simCtx.arc(d.x, d.y, 3.5, 0, Math.PI * 2);
+                            simCtx.fill();
+                        }
+
+                        // Draw Lions
+                        simCtx.fillStyle = '#F59E0B';
+                        for (const l of data.lions) {
+                            simCtx.beginPath();
+                            simCtx.arc(l.x, l.y, 5.5, 0, Math.PI * 2);
+                            simCtx.fill();
+                            
+                            // Highlight pouncing lions
+                            if (l.state === 'pounce') {
+                                simCtx.strokeStyle = '#EF4444';
+                                simCtx.lineWidth = 2;
+                                simCtx.beginPath();
+                                simCtx.arc(l.x, l.y, 7.5, 0, Math.PI * 2);
+                                simCtx.stroke();
+                            }
+                        }
+                        
+                        const totalDays = data.day;
+                        const year = Math.floor(totalDays / 360);
+                        const month = Math.floor((totalDays % 360) / 30);
+                        const dayOfMonth = (totalDays % 30) + 1;
+                        info.innerText = `Year: ${year} | Month: ${month} | Day: ${dayOfMonth} | Grass: ${data.grass.length} | Deer: ${data.deer.length} | Lions: ${data.lions.length}`;
+                        
+                        // Draw Graph
+                        drawGraph(data.history);
+                        drawPyramids(data.pyramid_stats);
+                    }
+                }
+            } catch (err) {
+                // Silently ignore fetch errors
+            }
+            requestAnimationFrame(fetchState);
+        }
+        
+        fetchState();
+    </script>
+</body>
+</html>

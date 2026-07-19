@@ -29,7 +29,9 @@ The project is structured into four levels:
 *   **[Level8](file:///home/angsuman/extra_spac/population_simulator/Level8/)**: Phase 1 of Incremental Realism: Logistic Resource Dynamics. Modifies grass to multiply at an organic 5% compounding rate scaled to max carrying capacity rather than flat daily spawning.
 *   **[Level8.1](file:///home/angsuman/extra_spac/population_simulator/Level8.1/)**: Phase 2 of Incremental Realism: Probabilistic Hunting & Vulnerable Forests. Introduces a 70% kill success probability for lions upon pouncing, and reduces hiding spot invulnerability to an 80% vision impairment penalty for searching lions.
 *   **[Level8.2](file:///home/angsuman/extra_spac/population_simulator/Level8.2/)**: Phase 3 of Incremental Realism: Gestation Delay. Eliminates instantaneous threshold spawning. Satiated animals now enter an independent 20% daily probability to reproduce, smoothing the Lotka-Volterra birth curves.
-*   **[Level8.3](file:///home/angsuman/extra_spac/population_simulator/Level8.3/)**: Phase 4 of Incremental Realism: Probabilistic Age Decay. Eliminates hard generation wipe-outs at `max_age`. Aged animals face an escalating 2% compounding daily chance of mortality, organically smoothing the decay parameter ($\gamma y$) on the graph.
+*   **[Level8.2.3](file:///home/angsuman/extra_spac/population_simulator/Level8.2.3/)**: Phase 5 of Incremental Realism: Age-Structured Life Cycles. Introduces Juvenile invulnerability and sterility, alongside Mature breeding peaks and Old Age sterility.
+*   **[Level9](file:///home/angsuman/extra_spac/population_simulator/Level9/)**: Phase 6 of Incremental Realism: Time Alignment. Realigns ticks to days. Reproduction becomes eating-independent (breeding twins annually), while starvation imposes a strict eating requirement to survive until breeding season.
+*   **[Level9.1](file:///home/angsuman/extra_spac/population_simulator/Level9.1/)**: Trophic Balancing. Corrects predatory explosion by limiting Lion reproduction to a slower rate of 1 cub every 2 years.
 
 
 ---
