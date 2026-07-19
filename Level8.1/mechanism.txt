@@ -1,0 +1,36 @@
+Ecosystem Simulation Mechanics (Level 7.1.2)
+
+This document explains the biological and computational rules driving the simulation in simple English. 
+
+--- 1. Grass (grass.py) ---
+- Spawning: Exactly 100 new patches of grass grow randomly across the map every single day.
+- Consumption: Grass doesn't move or die of old age; it simply waits until a deer eats it. Once eaten, it is removed from the simulation.
+
+--- 2. Deer (deer.py) ---
+- Movement & Flocking: Deer naturally wander around the map. If they get close to other deer, they adjust their movement to lightly flock together.
+- Foraging: Deer constantly look for the nearest grass within their sight. If they see grass, they steer towards it.
+- Eating & Reproduction: If a deer gets close enough to a patch of grass, it eats it. If a deer eats enough grass (5 patches), it immediately reproduces, spawning a new deer nearby. Its food count then resets.
+- Fleeing: If a lion enters a deer's sensory radius, the deer panics and sprints in the exact opposite direction.
+- Hiding: If a deer is near one of the designated "hiding spots" (forests/bushes), it will steer towards it. While inside a hiding spot, deer cannot be seen or eaten by lions, but their movement speed is drastically reduced.
+- Death: Deer age every day. They will die if they reach their maximum age (50 days) or if they go too many days without eating (15 days).
+
+--- 3. Lions (lion.py) ---
+- Movement & Clustering: Lions wander the map looking for prey. Like deer, they loosely cluster together if they pass near other lions.
+- Hunting & Chasing: Lions scan for deer. If a deer is detected, the lion stalks it. If the deer gets very close, the lion goes into a "pounce" state, gaining a massive speed boost to catch it.
+- Eating & Reproduction: If a lion catches a deer, the deer is killed and eaten. If a lion eats enough deer (3 deer), it reproduces, spawning a new lion.
+- Hiding Spot Rules: Lions cannot see or attack deer that are inside hiding spots.
+- Death: Lions die if they reach old age (40 days) or if they starve (20 days without catching a deer).
+
+--- 4. Computational Optimization (spatial_grid.py) ---
+- The Spatial Grid: To prevent the simulation from lagging when populations explode, the map is divided into a grid of 60x60 pixel squares.
+- Fast Lookups: Instead of every animal checking its distance against every other animal on the entire map (which is very slow), animals only look at the grid square they are standing in, plus the 8 immediately surrounding squares. This allows the simulation to run incredibly fast while maintaining the exact same ecological behaviors.
+
+--- 5. Simulation Loop (simulation.py) ---
+- Tick System: The simulation runs at 60 "ticks" (frames) per day.
+- Daily Updates: At the end of every 60 ticks, a day passes. New grass is spawned, and the age and hunger levels of all animals are updated. Dead animals and eaten grass are cleared from the map.
+- Data Collection: At the end of every day, the total population of grass, deer, and lions is recorded.
+
+--- 6. Data Output (main.py) ---
+- Execution: The main script runs the simulation silently (without a live visual window) for 200 simulated days.
+- CSV Generation: It dumps the daily population counts into a spreadsheet file (`run1.csv`).
+- Image Generation: It mathematically draws a line graph of the populations and saves it as an image (`run1.png`) using raw byte manipulation, without relying on external graphing libraries.

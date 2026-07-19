@@ -1,0 +1,156 @@
+import math
+import random
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from config import distance, in_hiding_spot
+
+class Lion:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+        self.vx = random.uniform(-1, 1)
+        self.vy = random.uniform(-1, 1)
+        self.radius = 5.5
+        self.state = 'wander'
+        self.food_eaten = 0
+        self.days_since_last_meal = random.randint(0, 10)
+        self.age = 0
+        self.dead = False
+        self.hunt_cooldown = 0
+
+    def get_border_repulsion(self, config):
+        fx = 0
+        fy = 0
+        if self.x < config.border_margin:
+            fx += config.border_strength * (1 - self.x / config.border_margin)
+        if self.x > config.map_width - config.border_margin:
+            fx -= config.border_strength * (1 - (config.map_width - self.x) / config.border_margin)
+        if self.y < config.border_margin:
+            fy += config.border_strength * (1 - self.y / config.border_margin)
+        if self.y > config.map_height - config.border_margin:
+            fy -= config.border_strength * (1 - (config.map_height - self.y) / config.border_margin)
+        return fx, fy
+
+    def update(self, env_state, config):
+        steerX, steerY = self.get_border_repulsion(config)
+        speedMult = config.lion_wander_speed
+        
+        nearest_deer = None
+        min_dist_sq = float('inf')
+        
+        if getattr(self, 'hunt_cooldown', 0) > 0:
+            self.hunt_cooldown -= 1
+            self.state = 'wander'
+        else:
+            nearby_deer = env_state['grid'].get_nearby(self.x, self.y, config.lion_stalk_dist)['deer']
+            
+            for d in nearby_deer:
+                if d.dead: continue
+                
+                is_hiding = in_hiding_spot(d.x, d.y, config.hiding_spots)
+                effective_stalk_dist = config.lion_stalk_dist * 0.2 if is_hiding else config.lion_stalk_dist
+                
+                d_sq = (self.x - d.x)**2 + (self.y - d.y)**2
+                if d_sq <= effective_stalk_dist**2 and d_sq < min_dist_sq:
+                    min_dist_sq = d_sq
+                    nearest_deer = d
+                    
+            if nearest_deer:
+                min_dist = math.sqrt(min_dist_sq)
+                dx = nearest_deer.x - self.x
+                dy = nearest_deer.y - self.y
+                chase_dist = math.hypot(dx, dy) or 1
+                
+                if min_dist < config.lion_pounce_dist:
+                    self.state = 'pounce'
+                    speedMult = config.lion_pounce_speed
+                    steerX += (dx / chase_dist) * 15.0
+                    steerY += (dy / chase_dist) * 15.0
+                elif min_dist <= config.lion_stalk_dist:
+                    self.state = 'stalk'
+                    speedMult = config.lion_stalk_speed
+                    steerX += (dx / chase_dist) * 8.0
+                    steerY += (dy / chase_dist) * 8.0
+                else:
+                    self.state = 'wander'
+                    speedMult = config.lion_wander_speed
+                    steerX += (dx / chase_dist) * 2.0
+                    steerY += (dy / chase_dist) * 2.0
+            else:
+                self.state = 'wander'
+                speedMult = config.lion_wander_speed
+
+        if self.state == 'wander':
+            nearby_lions = env_state['grid'].get_nearby(self.x, self.y, config.lion_cluster_dist)['lions']
+            cx = 0
+            cy = 0
+            count = 0
+            for l in nearby_lions:
+                if l != self and not l.dead and (self.x - l.x)**2 + (self.y - l.y)**2 < config.lion_cluster_dist**2:
+                    cx += l.x
+                    cy += l.y
+                    count += 1
+            if count > 0:
+                dc_x = (cx/count) - self.x
+                dc_y = (cy/count) - self.y
+                dc_dist = math.hypot(dc_x, dc_y) or 1
+                steerX += (dc_x / dc_dist) * 1.5
+                steerY += (dc_y / dc_dist) * 1.5
+        
+        self.vx += steerX * 0.02
+        self.vy += steerY * 0.02
+        self.vx *= config.friction
+        self.vy *= config.friction
+        
+        if abs(self.vx) < 0.15: self.vx += random.uniform(-0.4, 0.4)
+        if abs(self.vy) < 0.15: self.vy += random.uniform(-0.4, 0.4)
+
+        mag = math.hypot(self.vx, self.vy) or 1
+        self.x += (self.vx / mag) * speedMult
+        self.y += (self.vy / mag) * speedMult
+
+        if self.x < 0: self.x = 2; self.vx = abs(self.vx)
+        if self.x > config.map_width: self.x = config.map_width - 2; self.vx = -abs(self.vx)
+        if self.y < 0: self.y = 2; self.vy = abs(self.vy)
+        if self.y > config.map_height: self.y = config.map_height - 2; self.vy = -abs(self.vy)
+
+    def eat(self, env_state, config):
+        if getattr(self, 'hunt_cooldown', 0) > 0:
+            return
+            
+        nearby_deer = env_state['grid'].get_nearby(self.x, self.y, config.lion_eat_range)['deer']
+        for d in nearby_deer:
+            if d.dead: continue
+            if (self.x - d.x)**2 + (self.y - d.y)**2 < config.lion_eat_range**2:
+                if random.random() <= 0.70:
+                    self.food_eaten += 1
+                    self.days_since_last_meal = 0
+                    d.dead = True
+                else:
+                    self.hunt_cooldown = 30
+                    self.vx = random.uniform(-2, 2)
+                    self.vy = random.uniform(-2, 2)
+                break
+
+    def reproduce(self, config):
+        if self.food_eaten >= config.lion_food_req:
+            if random.random() <= 0.20:
+                self.food_eaten -= config.lion_food_req
+                return [Lion(self.x + random.uniform(-10, 10), self.y + random.uniform(-10, 10))]
+        return []
+
+    def daily_update(self, config):
+        self.days_since_last_meal += 1
+        self.age += 1
+        if self.days_since_last_meal > config.lion_starvation_days:
+            self.dead = True
+        elif self.age > config.lion_max_age:
+            days_over = self.age - config.lion_max_age
+            mortality_chance = 0.02 * days_over
+            if random.random() < mortality_chance:
+                self.dead = True
+
+    def to_dict(self):
+        return {"x": round(self.x, 1), "y": round(self.y, 1), "state": self.state}

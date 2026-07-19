@@ -1,0 +1,23 @@
+Ecosystem Simulation Mechanics (Incremental Realism Update - Level 8.3)
+
+This document explains the biological rules driving the most up-to-date simulation (Level 8.3) in simple English. 
+
+--- 1. Grass (Resources) ---
+- Logistic Growth: Grass no longer spawns at a flat daily rate. Instead, it behaves organically by compounding at 5% of its current population per day (tick).
+- Carrying Capacity: Growth mathematically halts smoothly as it approaches the `max_grass` cap (1,500) to prevent exponential explosion and lag.
+
+--- 2. Deer (Herbivores) ---
+- Foraging: Deer naturally steer towards the nearest visible grass patch and graze. 
+- Gestation Delay: Eating fills an "energy pool." Once full (5 grass patches), the deer does not instantly split. Instead, it enters a gestation period, passing a 20% probability check each day to give birth. 
+- Hiding Spots (Forests): Fleeing deer will seek camouflage in forests. Hiding spots no longer offer 100% magical invulnerability.
+- Probabilistic Age Decay: Deer do not drop dead instantly on day 150. Instead, after day 150, they face a 2% chance of dying of old age, which increases by an additional 2% every subsequent day.
+
+--- 3. Lions (Predators) ---
+- Probabilistic Hunting: If a lion pounces on a deer, it only has a 70% chance to secure the catch. If it fails, the lion enters a "cooldown" phase, bouncing away and giving the deer time to escape.
+- Diminished Vision: If a lion looks into a hiding spot/forest, its vision radius is reduced by 80%. If a lion wanders close enough (within that 20% remaining sight line), it can still spot and kill the hiding deer.
+- Emergent Flocking (Death Spiral): When deer are scarce and hiding, lions often lose track of them at the forest edge, revert to a "wander" state, and accidentally lock into a circular flocking orbit (Milling) around the hiding spot due to their cohesion mechanics.
+- Gestation & Decay: Similar to deer, fully fed lions have a 20% daily chance to reproduce. Old lions (250+ days) face the same escalating 2% probabilistic daily mortality chance.
+
+--- 4. Visualizer Engine ---
+- Decoupled Rendering: The simulation calculations run independently in a bare Python script. A background HTTP thread serializes the coordinate data to a live HTML5 Canvas frontend.
+- Chronology: 1 Tick = 1 Day. The real-time line graph perfectly visualizes the Lotka-Volterra curves across 33 "Years" without ever interfering with the core biological speeds.

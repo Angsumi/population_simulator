@@ -22,7 +22,18 @@
     "Level5.2 Balanced Three-Trophic Model implementing herbivore foraging satiation (energy > 125) and shifting the camouflage forest to a bottom-center safe zone to clear predator crossing channels",
     "Level5.3 Dynamic Energy Cap Model linking maximum energy caps and hunting satiation bounds directly to the user's custom birth split thresholds to resolve reproductive ceilings",
     "Level5.4 Spatial Hunt Equilibrium Model adding active prey fleeing vectors (75px sensory radius) and reducing predator eating gains to slow births and stabilize oscillations",
-    "Level5.5 Territorial Predator Model implementing spatial density checks for predators (crowding > 2 within 120px) which doubles energy costs and blocks splitting to protect prey populations"
+    "Level5.5 Territorial Predator Model implementing spatial density checks for predators (crowding > 2 within 120px) which doubles energy costs and blocks splitting to protect prey populations",
+    "Level6 Savanna Ecosystem Simulation with complete natural landscape, mating, gestation litters, waterholes, seasonal cycle variation, and wildfires",
+    "Level7.1 Bare Python Ecosystem Simulator running headless 200-day simulation using organic Lotka-Volterra dynamics",
+    "Level7.1.1 PyPy JIT-compiled optimization reducing runtime from 10 minutes to 3.5 minutes",
+    "Level7.1.2 Algorithmic Spatial Optimization using a Spatial Partitioning Grid to drop calculation complexity from O(N^2) to O(N)",
+    "Level7.1.3 Decoupled Visualizer Optimization running an independent background HTTP thread and HTML5 Canvas frontend",
+    "Level7.1.4 Real-time Analytics Visualizer with live history line graph",
+    "Level7.1.5 Visual Chronology scaling (1 tick = 1 day, 30 ticks = 1 month) seamlessly rendering on the decoupled UI",
+    "Level8 Phase 1: Logistic Resource Dynamics, grass compounding at 5% per day up to max capacity",
+    "Level8.1 Phase 2: Probabilistic Hunting and Vulnerable Refuges (70% lion success rate, 80% vision drop in forests)",
+    "Level8.2 Phase 3: Gestation Delay smoothing out instantaneous reproduction via 20% daily birth probability for fed animals",
+    "Level8.3 Phase 4: Probabilistic Age Decay substituting hard mortality caps with an escalating % death chance"
   ],
-  "instructions_for_future_agents": "When working in this repository, always read this context file and the root README.md first. Follow the directory protocol: keep Level1 & Level2 pristine; add interactive/extended features to Level1.1 & Level2.1; explore emergent ecological systems under Level3 (Spatial Density Competition), Level3.1 (Prey-Resource dynamics), Level4 (Seasonal Foraging and chemotaxis steering), Level5 (Three-Trophic predator-prey dynamics), Level5.1 (refuges and satiation stabilization), Level5.2 (balanced dynamics), Level5.3 (dynamic energy bounds), Level5.4 (prey fleeing and slowed predator growth), and Level5.5 (predator territoriality and crowding limits). Make sure git operations use the configured GitHub repository. To push updates, use: git add . && git commit -m '<message>' && git push origin main"
+  "instructions_for_future_agents": "When working in this repository, always read this context file and the root README.md first. Follow the directory protocol for incremental updates. Make sure git operations use the configured GitHub repository. To push updates, use: git add . && git commit -m '<message>' && git push origin main"
 }
