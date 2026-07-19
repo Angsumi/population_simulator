@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: 0BSD
+# Author: Lasse Collin
+
+prefix=/home/angsuman/extra_spac/population_simulator/Level7.1.1/pypy_env
+exec_prefix=/home/angsuman/extra_spac/population_simulator/Level7.1.1/pypy_env
+libdir=/home/angsuman/extra_spac/population_simulator/Level7.1.1/pypy_env/lib
+includedir=/home/angsuman/extra_spac/population_simulator/Level7.1.1/pypy_env/include
+
+Name: liblzma
+Description: General purpose data compression library
+License: 0BSD
+URL: https://tukaani.org/xz/
+Version: 5.8.3
+Cflags: -I${includedir}
+Cflags.private: -DLZMA_API_STATIC
+Libs: -L${libdir} -llzma
+Libs.private: -pthread -lpthread 

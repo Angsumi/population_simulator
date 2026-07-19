@@ -1,0 +1,34 @@
+{
+  "name": "python_abi",
+  "version": "3.9",
+  "build": "8_pypy39_pp73",
+  "build_number": 8,
+  "channel": "https://conda.anaconda.org/conda-forge/noarch",
+  "subdir": "noarch",
+  "fn": "python_abi-3.9-8_pypy39_pp73.conda",
+  "md5": "2ff00dc468e2e4f2d07a44a6ec9f854b",
+  "url": "https://conda.anaconda.org/conda-forge/noarch/python_abi-3.9-8_pypy39_pp73.conda",
+  "sha256": "58b131b38709203ad6072fcb3a4ed397b8ab5a8b59107ffa9ca0038ac6d0f61f",
+  "depends": [],
+  "constrains": [
+    "python 3.9.* *_73_pypy"
+  ],
+  "track_features": "pypy",
+  "noarch": "generic",
+  "license": "BSD-3-Clause",
+  "package_type": "noarch_generic",
+  "timestamp": 1752805919000,
+  "size": 7021,
+  "requested_spec": "None",
+  "package_tarball_full_path": "/home/angsuman/miniconda3/pkgs/python_abi-3.9-8_pypy39_pp73.conda",
+  "extracted_package_dir": "/home/angsuman/miniconda3/pkgs/python_abi-3.9-8_pypy39_pp73",
+  "files": [],
+  "paths_data": {
+    "paths_version": 1,
+    "paths": []
+  },
+  "link": {
+    "source": "/home/angsuman/miniconda3/pkgs/python_abi-3.9-8_pypy39_pp73",
+    "type": 1
+  }
+}

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ecosystem Simulator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="bg-slate-900 text-slate-200 font-['Plus_Jakarta_Sans'] min-h-screen flex flex-col p-4 md:p-8">
+    <div class="max-w-7xl mx-auto w-full flex-grow flex flex-col gap-6">
+        
+        <header class="flex justify-between items-center bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl">
+            <div>
+                <h1 class="text-3xl font-bold text-white tracking-tight flex items-center gap-3">
+                    <span class="text-emerald-400">❖</span> Ecosystem Simulator
+                </h1>
+                <p class="text-slate-400 mt-1">Python Engine • Balanced Real-time Population Dynamics</p>
+            </div>
+            <div class="flex gap-6 text-sm font-semibold bg-slate-900 px-6 py-3 rounded-xl border border-slate-700">
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_10px_#10b981]"></span><span id="ui-grassCount">0</span> Grass</div>
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-blue-500 shadow-[0_0_10px_#3b82f6]"></span><span id="ui-deerCount">0</span> Deer</div>
+                <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full bg-amber-500 shadow-[0_0_10px_#f59e0b]"></span><span id="ui-lionCount">0</span> Lions</div>
+            </div>
+            <div class="text-right">
+                <div class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">Status</div>
+                <div class="text-xl font-bold text-white flex items-center justify-end gap-2">
+                    <span id="ui-status" class="text-emerald-400">Running</span> 
+                    <span class="text-slate-600">|</span> 
+                    Day <span id="ui-day" class="font-mono">0</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Form wrapper containing all inputs -->
+        <form id="config-form" class="flex flex-col gap-6 w-full">
+            
+            <div class="grid grid-cols-12 gap-6 w-full items-start">
+                
+                <!-- Left Column (col-span-3): Deer Parameters -->
+                <aside class="col-span-3 w-full bg-slate-800 rounded-2xl p-5 border border-slate-700 shadow-xl flex flex-col gap-4">
+                    <h2 class="text-md font-bold text-blue-400 flex items-center gap-2 border-b border-slate-700/60 pb-2">
+                        <span>🦌</span> Deer Parameters
+                    </h2>
+                    <div id="params-deer" class="flex flex-col gap-3 max-h-[600px] overflow-y-auto pr-1">
+                        <!-- JS will populate -->
+                    </div>
+                </aside>
+
+                <!-- Center Column (col-span-6): Controls, Canvas, Graphs -->
+                <main class="col-span-6 flex flex-col gap-6 min-w-0">
+                    
+                    <!-- Controls Card -->
+                    <div class="bg-slate-800 rounded-2xl p-5 border border-slate-700 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div class="flex items-center gap-2 w-full sm:w-auto">
+                            <!-- 3 Buttons: Start, Pause, Stop -->
+                            <button type="button" id="btn-start" class="flex-1 sm:flex-none px-6 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-lg transition-colors shadow-[0_0_10px_rgba(16,185,129,0.3)]">
+                                Start
+                            </button>
+                            <button type="button" id="btn-pause" class="flex-1 sm:flex-none px-6 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-lg transition-colors shadow-[0_0_10px_rgba(245,158,11,0.3)]">
+                                Pause
+                            </button>
+                            <button type="button" id="btn-stop" class="flex-1 sm:flex-none px-6 py-2 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-lg transition-colors shadow-[0_0_10px_rgba(239,68,68,0.3)]">
+                                Stop
+                            </button>
+                        </div>
+                        
+                        <!-- Speed Control -->
+                        <div class="flex items-center gap-3 w-full sm:w-auto">
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Speed</span>
+                            <div class="grid grid-cols-5 gap-1 bg-slate-900 p-1 rounded-lg border border-slate-700 w-full sm:w-auto">
+                                <button type="button" data-speed="0.5" class="btn-speed text-xs px-2.5 py-1 rounded font-semibold text-slate-400 hover:text-white transition-colors">0.5x</button>
+                                <button type="button" data-speed="1" class="btn-speed text-xs px-2.5 py-1 rounded font-semibold text-white bg-slate-700 transition-colors">1x</button>
+                                <button type="button" data-speed="2" class="btn-speed text-xs px-2.5 py-1 rounded font-semibold text-slate-400 hover:text-white transition-colors">2x</button>
+                                <button type="button" data-speed="4" class="btn-speed text-xs px-2.5 py-1 rounded font-semibold text-slate-400 hover:text-white transition-colors">4x</button>
+                                <button type="button" data-speed="8" class="btn-speed text-xs px-2.5 py-1 rounded font-semibold text-slate-400 hover:text-white transition-colors">8x</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Canvas -->
+                    <div class="bg-slate-800 rounded-2xl p-2 border border-slate-700 shadow-xl relative overflow-hidden group">
+                        <canvas id="simCanvas" width="1200" height="440" class="w-full rounded-xl bg-slate-900" style="image-rendering: pixelated;"></canvas>
+                    </div>
+
+                    <!-- Graphs -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 h-60">
+                        <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700 shadow-xl relative">
+                            <h3 class="absolute top-4 left-6 text-sm font-bold text-slate-300 z-10">Population History</h3>
+                            <div class="h-full pt-6">
+                                <canvas id="chartPopulation"></canvas>
+                            </div>
+                        </div>
+                        <div class="bg-slate-800 rounded-2xl p-4 border border-slate-700 shadow-xl relative">
+                            <h3 class="absolute top-4 left-6 text-sm font-bold text-slate-300 z-10">Grass History</h3>
+                            <div class="h-full pt-6">
+                                <canvas id="chartGrass"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                </main>
+
+                <!-- Right Column (col-span-3): Lion Parameters -->
+                <aside class="col-span-3 w-full bg-slate-800 rounded-2xl p-5 border border-slate-700 shadow-xl flex flex-col gap-4">
+                    <h2 class="text-md font-bold text-amber-500 flex items-center gap-2 border-b border-slate-700/60 pb-2">
+                        <span>🦁</span> Lion Parameters
+                    </h2>
+                    <div id="params-lion" class="flex flex-col gap-3 max-h-[600px] overflow-y-auto pr-1">
+                        <!-- JS will populate -->
+                    </div>
+                </aside>
+
+            </div>
+
+            <!-- Bottom Section (lg:col-span-12): Grass & Environment Parameters -->
+            <footer class="w-full bg-slate-800 rounded-2xl p-5 border border-slate-700 shadow-xl flex flex-col gap-4">
+                <h2 class="text-md font-bold text-emerald-400 flex items-center gap-2 border-b border-slate-700/60 pb-2">
+                    <span>🌿</span> Grass & Environment Parameters
+                </h2>
+                <div id="params-environment" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <!-- JS will populate -->
+                </div>
+            </footer>
+
+        </form>
+
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

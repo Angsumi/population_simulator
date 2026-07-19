@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Real-time Ecosystem Visualizer</title>
+    <style>
+        body { margin: 0; padding: 0; background-color: #222; color: #fff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; }
+        canvas { background-color: #1a1a1a; margin-top: 20px; box-shadow: 0 0 10px rgba(0,0,0,0.5); border-radius: 8px; }
+        #info { margin-top: 20px; font-size: 20px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div id="info">Waiting for simulation data...</div>
+    <canvas id="simCanvas" width="1200" height="440"></canvas>
+    <script>
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        const info = document.getElementById('info');
+
+        async function fetchState() {
+            try {
+                const response = await fetch('/state');
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Clear canvas
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    
+                    if (data.hiding_spots) {
+                        // Draw Hiding Spots
+                        ctx.fillStyle = 'rgba(34, 139, 34, 0.3)';
+                        for (const spot of data.hiding_spots) {
+                            ctx.beginPath();
+                            ctx.arc(spot.x, spot.y, spot.radius, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+
+                        // Draw Grass
+                        ctx.fillStyle = '#10B981';
+                        for (const g of data.grass) {
+                            ctx.beginPath();
+                            ctx.arc(g.x, g.y, 2, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+
+                        // Draw Deer
+                        ctx.fillStyle = '#3B82F6';
+                        for (const d of data.deer) {
+                            ctx.beginPath();
+                            ctx.arc(d.x, d.y, 3.5, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+
+                        // Draw Lions
+                        ctx.fillStyle = '#F59E0B';
+                        for (const l of data.lions) {
+                            ctx.beginPath();
+                            ctx.arc(l.x, l.y, 5.5, 0, Math.PI * 2);
+                            ctx.fill();
+                            
+                            // Highlight pouncing lions
+                            if (l.state === 'pounce') {
+                                ctx.strokeStyle = '#EF4444';
+                                ctx.lineWidth = 2;
+                                ctx.beginPath();
+                                ctx.arc(l.x, l.y, 7.5, 0, Math.PI * 2);
+                                ctx.stroke();
+                            }
+                        }
+                        
+                        info.innerText = `Day: ${data.day} | Grass: ${data.grass.length} | Deer: ${data.deer.length} | Lions: ${data.lions.length}`;
+                    }
+                }
+            } catch (err) {
+                // Silently ignore fetch errors in loop to avoid console spam if server shuts down
+            }
+            requestAnimationFrame(fetchState);
+        }
+        
+        fetchState();
+    </script>
+</body>
+</html>
